@@ -24,6 +24,6 @@ module load cmake
 module load anaconda
 
 cd /scratch/alpine/noso3320/trem2/trem2_unidock
-conda activate -p /projects/noso3320/software/dock_env
+conda activate dock_env
 
 python trem2_scripts/getdata_sdf.py
