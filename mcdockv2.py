@@ -13,8 +13,8 @@ from pathlib import Path
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RECEPTOR_FILE = os.path.join(SCRIPT_DIR, "../data/receptor/cluster1_fixed.pdb")
-LIGAND_DIR = os.path.join(SCRIPT_DIR, "../data/test_sdf/ligands_sdf_split/")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/mcdock_outputs_test/")
+LIGAND_DIR = os.path.join(SCRIPT_DIR, "../data/column_one/ligands_sdf_split/")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/mcdock_outputs_column_one/")
 
 # Box parameters (same as original script)
 CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
@@ -43,7 +43,7 @@ MCDOCK_FLAGS = {
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
     "--max_num_confs_per_ligand": "50",
-    # "--gen_conf": None,  # Flag only, no value
+    "--gen_conf": "1",  # Flag only, no value
 }
 
 
