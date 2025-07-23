@@ -1,0 +1,55 @@
+Failed (1) ACADRN.xab.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AC/ADRN/ACADRN.xab.sdf.gz
+ Failed (2) ACEARN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EARN/ACEARN.xaa.sdf.gz
+✗ Failed (3) ACEARO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EARO/ACEARO.xaa.sdf.gz
+✗ Failed (4) ACEARP.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EARP/ACEARP.xaa.sdf.gz
+ Failed (5) ACEBML.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBML/ACEBML.xaa.sdf.gz
+✗ Failed (6) ACEBMN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBMN/ACEBMN.xaa.sdf.gz
+✗ Failed (7) ACEBMM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBMM/ACEBMM.xaa.sdf.gz
+✗ Failed (8) ACEBMO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBMO/ACEBMO.xaa.sdf.gz
+✗ Failed (9) ACEBMP.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBMP/ACEBMP.xaa.sdf.gz
+✗ Failed (10) ACEBRL.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBRL/ACEBRL.xaa.sdf.gz
+✗ Failed (11) ACEBRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBRN/ACEBRN.xaa.sdf.gz
+✗ Failed (12) ACEBRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBRO/ACEBRO.xaa.sdf.gz
+✗ Failed (13) ACEBRP.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBRP/ACEBRP.xaa.sdf.gz
+✗ Failed (14) ACEBRM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EBRM/ACEBRM.xaa.sdf.gz
+✗ Failed (15) ACEDML.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EDML/ACEDML.xaa.sdf.gz
+✗ Failed (16) ACEDMM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EDMM/ACEDMM.xaa.sdf.gz
+ Failed (17) ACEDRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EDRN/ACEDRN.xaa.sdf.gz
+✗ Failed (18) ACEDRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EDRO/ACEDRO.xaa.sdf.gz
+✗ Failed (19) ACEDRP.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AC/EDRP/ACEDRP.xaa.sdf.gz
+Failed (20) ADAARP.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AD/AARP/ADAARP.xaa.sdf.gz
+Failed (21) ADADRN.xac.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AD/ADRN/ADADRN.xac.sdf.gz
+✗ Failed (22) ADADRO.xab.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AD/ADRO/ADADRO.xab.sdf.gz
+Failed (23) ADEDRN.xab.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AD/EDRN/ADEDRN.xab.sdf.gz
+Failed (24) AEADML.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AE/ADML/AEADML.xaa.sdf.gz
+ Failed (25) AEADRL.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AE/ADRL/AEADRL.xaa.sdf.gz
+  Failed (26) AECDRM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AE/CDRM/AECDRM.xaa.sdf.gz
+  Failed (27) AEEDRL.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AE/EDRL/AEEDRL.xaa.sdf.gz
+  Failed (28) AFADMP.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AF/ADMP/AFADMP.xaa.sdf.gz
+✗ Failed (29) AFADRL.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AF/ADRL/AFADRL.xaa.sdf.gz
+Failed (30) AFBBMM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AF/BBMM/AFBBMM.xaa.sdf.gz
+Failed (31) AFEDMM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AF/EDMM/AFEDMM.xaa.sdf.gz
+ Failed (32) AGADMM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AG/ADMM/AGADMM.xaa.sdf.gz
+  Failed (33) AGCARN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/CARN/AGCARN.xaa.sdf.gz
+   Failed (36) AGCBRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/CBRO/AGCBRO.xaa.sdf.gz
+✗ Failed (37) AGCDMO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/CDMO/AGCDMO.xaa.sdf.gz
+✗ Failed (38) AGCDRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/CDRN/AGCDRN.xaa.sdf.gz
+✗ Failed (39) AGEAMM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EAMM/AGEAMM.xaa.sdf.gz
+✗ Failed (40) AGEAMN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EAMN/AGEAMN.xaa.sdf.gz
+✗ Failed (41) AGEAMO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EAMO/AGEAMO.xaa.sdf.gz
+✗ Failed (42) AGEARM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EARM/AGEARM.xaa.sdf.gz
+✗ Failed (43) AGEARN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EARN/AGEARN.xaa.sdf.gz
+✗ Failed (44) AGEARO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EARO/AGEARO.xaa.sdf.gz
+✗ Failed (45) AGEBMM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBMM/AGEBMM.xaa.sdf.gz
+✗ Failed (46) AGEBMN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBMN/AGEBMN.xaa.sdf.gz
+ ✗ Failed (47) AGEBMO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBMO/AGEBMO.xaa.sdf.gz
+✗ Failed (48) AGEBRM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBRM/AGEBRM.xaa.sdf.gz
+ Failed (49) AGEBRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBRN/AGEBRN.xaa.sdf.gz
+✗ Failed (50) AGEBRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EBRO/AGEBRO.xaa.sdf.gz
+✗ Failed (51) AGEDMM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDMM/AGEDMM.xaa.sdf.gz
+✗ Failed (52) AGEDMN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDMN/AGEDMN.xaa.sdf.gz
+✗ Failed (53) AGEDMO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDMO/AGEDMO.xaa.sdf.gz
+✗ Failed (54) AGEDRL.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRL/AGEDRL.xaa.sdf.gz
+✗ Failed (55) AGEDRM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRM/AGEDRM.xaa.sdf.gz
+✗ Failed (56) AGEDRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRN/AGEDRN.xaa.sdf.gz
+✗ Failed (57) AGEDRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRO/AGEDRO.xaa.sdf.gz

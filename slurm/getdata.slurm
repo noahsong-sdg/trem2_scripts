@@ -7,8 +7,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
-#SBATCH --output=unidock_hts_%j.out
-#SBATCH --error=unidock_hts_%j.err
+#SBATCH --output=c1_%j.out
+#SBATCH --error=c1_%j.err
 
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=noso3320@colorado.edu

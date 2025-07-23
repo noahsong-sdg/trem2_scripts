@@ -38,6 +38,11 @@ def download_zinc_subset(url, output_dir, filename=None):
 
     filepath = os.path.join(output_dir, filename)
 
+    # Existence check: skip if file exists and is non-empty
+    if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+        print(f"✓ Skipping already downloaded: {filename}")
+        return filepath
+
     try:
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()  # Raise an exception for bad status codes
