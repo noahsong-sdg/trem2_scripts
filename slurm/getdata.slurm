@@ -25,6 +25,6 @@ module load anaconda
 
 cd /scratch/alpine/noso3320/trem2/trem2_unidock
 conda activate -p /projects/noso3320/hts_env
-conda update -p /projects/noso3320/hts_env -c conda-forge
+conda update -p /projects/noso3320/hts_env -n unidock -c conda-forge
 
 python scripts/getdata_sdf.py
