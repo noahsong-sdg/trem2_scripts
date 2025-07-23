@@ -16,7 +16,7 @@
 #SBATCH --mail-user=noso3320@colorado.edu
 
 
-SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/scripts"
+SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/trem2_scripts"
 DATA_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/data"
 RESULTS_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/results"
 
@@ -27,5 +27,5 @@ module load cmake
 module load anaconda
 
 cd /scratch/alpine/noso3320/trem2/trem2_unidock
-conda activate /projects/noso3320/hts_env
+conda activate -p /projects/noso3320/software/dock_env
 python $SCRIPT_DIR/mcdockv2.py

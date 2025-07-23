@@ -2,6 +2,8 @@
 """
 SDF Data download script with comprehensive timing functionality and parallel downloads.
 Downloads ligand data in SDF format for mcdock compatibility and tracks performance metrics.
+conda create -n unidock_env unidock -c conda-forge
+mamba create -n unidock_env python=3.10 requests unidock -c conda-forge
 """
 import requests
 import os

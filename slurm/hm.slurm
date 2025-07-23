@@ -3,10 +3,10 @@
 #SBATCH --qos=normal
 #SBATCH --partition=amilan
 #SBATCH --account=ucb-general
-#SBATCH --job-name=get_column_one
+#SBATCH --job-name=config_env
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=1
 #SBATCH --output=unidock_hts_%j.out
 #SBATCH --error=unidock_hts_%j.err
 
@@ -23,7 +23,5 @@ module load gcc
 module load cmake
 module load anaconda
 
-cd /scratch/alpine/noso3320/trem2/trem2_unidock
-conda activate -p /projects/noso3320/software/dock_env
-
-python trem2_scripts/getdata_sdf.py
+cd /projects/noso3320/software
+conda create -n dock_env unidock -c conda-forge
