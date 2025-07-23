@@ -6,7 +6,7 @@
 #SBATCH --job-name=config_env
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=4
 #SBATCH --output=unidock_hts_%j.out
 #SBATCH --error=unidock_hts_%j.err
 
