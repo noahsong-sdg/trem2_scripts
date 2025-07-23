@@ -6,7 +6,7 @@
 #SBATCH --job-name=unidockdock
 
 #SBATCH --nodes=1
-#SBATCH --ntasks=12
+#SBATCH --ntasks=1
 
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=12
@@ -17,7 +17,7 @@
 
 
 SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/trem2_scripts"
-DATA_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/data"
+DATA_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/data/column_one"
 RESULTS_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/results"
 
 module purge

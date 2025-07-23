@@ -53,3 +53,12 @@ Failed (31) AFEDMM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://file
 ✗ Failed (55) AGEDRM.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRM/AGEDRM.xaa.sdf.gz
 ✗ Failed (56) AGEDRN.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRN/AGEDRN.xaa.sdf.gz
 ✗ Failed (57) AGEDRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRO/AGEDRO.xaa.sdf.gz
+
+
+
+
+
+
+##########################
+✗ Failed (1) ACADRN.xab.sdf.gz: 404 Client Error: Not Found for url: https://files.docking.org/3D/AC/ADRN/ACADRN.xab.sdf.gz
+failed: 57
