@@ -24,7 +24,7 @@ module load cmake
 module load anaconda
 
 cd /scratch/alpine/noso3320/trem2/trem2_unidock
-conda activate /projects/noso3320/hts_env
-conda update -n /projects/noso3320/hts_env -c conda-forge
+conda activate -p /projects/noso3320/hts_env
+conda update -p /projects/noso3320/hts_env -c conda-forge
 
 python scripts/getdata_sdf.py
