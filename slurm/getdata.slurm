@@ -14,16 +14,16 @@
 #SBATCH --mail-user=noso3320@colorado.edu
 
 
-SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/scripts"
-DATA_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/data"
-RESULTS_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/results"
+SCRIPT_DIR="/scratch/alpine/noso3320/trem2/unidock/scripts"
+DATA_DIR="/scratch/alpine/noso3320/trem2/unidock/data"
+RESULTS_DIR="/scratch/alpine/noso3320/trem2/unidock/results"
 
 module purge
 module load gcc
 module load cmake
 module load anaconda
 
-cd /scratch/alpine/noso3320/trem2/trem2_unidock
+cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 
 python scripts/getdata_sdf.py
