@@ -10,13 +10,13 @@
 
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=12
-#SBATCH --output=unidock_hts_%j.out
-#SBATCH --error=unidock_hts_%j.err
+#SBATCH --output=mcdock_%j.out
+#SBATCH --error=mcdock_%j.err
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=noso3320@colorado.edu
 
 
-SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/trem2_scripts"
+SCRIPT_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/scripts"
 DATA_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/data/column_one"
 RESULTS_DIR="/scratch/alpine/noso3320/trem2/trem2_unidock/results"
 
