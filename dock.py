@@ -19,7 +19,7 @@ import json
 from pathlib import Path
 
 # Import timing utilities
-from timing_utils import TimingTracker
+from delete_because_useless.timing_utils import TimingTracker
 
 # Get the absolute path of the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
