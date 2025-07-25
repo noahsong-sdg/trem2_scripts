@@ -26,6 +26,8 @@ module load cuda/11.8
 module load cmake
 module load anaconda
 
+eval "$(conda shell.bash hook)"
+
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 python $SCRIPT_DIR/mcdockv2.py
