@@ -4,7 +4,6 @@ Minimal UniDock docking script for all ligands in a directory.
 - Centralizes all CLI flags for easy modification.
 - Supports both SDF and PDBQT ligands (no SDF-only enforcement).
 - No batching, no SLURM, no tranche logic.
-- Output goes to ../results/mcdock_outputs_test/
 """
 import os
 import subprocess
