@@ -1,3 +1,8 @@
 __pycache__/
 delete_because_useless/
 *.txt
+*.out
+*.err
+failed.uri
+test_sdf.uri 
+
