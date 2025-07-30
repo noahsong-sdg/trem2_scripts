@@ -30,6 +30,4 @@ eval "$(conda shell.bash hook)"
 
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
-python -c "import openbabel"
-which openbabel
 python $SCRIPT_DIR/mcdockv2.py
