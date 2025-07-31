@@ -31,7 +31,7 @@ MCDOCK_FLAGS = {
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
     # "--savedir": os.path.join(OUTPUT_DIR, "MultiConfDock-Result"),
-    "--batch_size": "1200",
+    "--batch_size": "800", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",

@@ -3,13 +3,13 @@
 #SBATCH --qos=normal
 #SBATCH --partition=aa100 # aa100
 #SBATCH --account=ucb-general
-#SBATCH --job-name=unidockdock
+#SBATCH --job-name=mcdock
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
 #SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=6
 #SBATCH --output=mcdock_%j.out
 #SBATCH --error=mcdock_%j.err
 #SBATCH --mail-type=FAIL,END
