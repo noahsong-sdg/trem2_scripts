@@ -231,6 +231,25 @@ def _save_molecule(molecule_lines, molecule_name, output_dir, tranche_name, mole
     if not molecule_lines:
         return
     
+    # Test if Open Babel can read this molecule
+    try:
+        import subprocess
+        mol_text = '\n'.join(molecule_lines)
+        result = subprocess.run(['obabel', '-:', '-osdf'], 
+                              input=mol_text, text=True, capture_output=True, timeout=10)
+        if result.returncode != 0:
+            print(f"Skipping invalid molecule {molecule_index} in {tranche_name}")
+            return
+    except subprocess.TimeoutExpired:
+        print(f"Skipping molecule {molecule_index} in {tranche_name} (timeout)")
+        return
+    except FileNotFoundError:
+        # Open Babel not available, continue without validation
+        pass
+    except Exception as e:
+        print(f"Error validating molecule {molecule_index}: {e}")
+        return
+    
     # Create tranche-specific directory
     tranche_dir = os.path.join(output_dir, tranche_name)
     os.makedirs(tranche_dir, exist_ok=True)
@@ -264,6 +283,14 @@ def _save_molecule(molecule_lines, molecule_name, output_dir, tranche_name, mole
     
     with open(output_path, 'w') as f:
         for line in molecule_lines:
+            # Filter out unwanted header lines
+            line_stripped = line.strip()
+            if (line_stripped.startswith('OpenBabel') or 
+                line_stripped.startswith('ZINC') or
+                line_stripped.endswith('.sdf') or
+                line_stripped.endswith('.pdbqt') or
+                (len(line_stripped) < 5 and not line_stripped.startswith('$$$$'))):
+                continue
             f.write(line + '\n')
 
 def split_sdf_files(input_dir, output_dir, max_workers=4):
