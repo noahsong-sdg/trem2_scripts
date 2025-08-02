@@ -23,6 +23,6 @@ module load gcc
 module load cmake
 module load anaconda
 
-cd /projects/noso3320/software
+cd /scratch/alpine/noso3320/trem2/unidock/scripts
 conda activate dock_env
-conda install obabel -c conda-forge
+conda env update -f dock_env.yml
