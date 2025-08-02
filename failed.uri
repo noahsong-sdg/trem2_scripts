@@ -55,6 +55,7 @@ Failed (31) AFEDMM.xaa.sdf.gz: 404 Client Error: Not Found for url: https://file
 ##### ✗ Failed (57) AGEDRO.xaa.sdf.gz: 503 Server Error: Service Unavailable for url: https://files.docking.org/3D/AG/EDRO/AGEDRO.xaa.sdf.gz
 
 
-57
--> 36
--> 
+
+
+241 -> 192 -> 90
+-> 73 -> 56 -> 
