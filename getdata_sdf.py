@@ -284,13 +284,13 @@ def _save_molecule(molecule_lines, molecule_name, output_dir, tranche_name, mole
     with open(output_path, 'w') as f:
         for line in molecule_lines:
             # Filter out unwanted header lines
-            line_stripped = line.strip()
+            """line_stripped = line.strip()
             if (line_stripped.startswith('OpenBabel') or 
                 line_stripped.startswith('ZINC') or
                 line_stripped.endswith('.sdf') or
                 line_stripped.endswith('.pdbqt') or
                 (len(line_stripped) < 5 and not line_stripped.startswith('$$$$'))):
-                continue
+                continue"""
             f.write(line + '\n')
 
 def split_sdf_files(input_dir, output_dir, max_workers=4):

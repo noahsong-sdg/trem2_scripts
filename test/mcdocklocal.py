@@ -11,9 +11,9 @@ from pathlib import Path
 
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-RECEPTOR_FILE = os.path.join(SCRIPT_DIR, "../data/receptor/cluster1_fixed.pdb")
-LIGAND_DIR = os.path.join(SCRIPT_DIR, "../data/sdftest2/ligands_sdf_split/")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/mcdock_local_test/")
+RECEPTOR_FILE = os.path.join(SCRIPT_DIR, "../../data/receptor/cluster1_fixed.pdb")
+LIGAND_DIR = os.path.join(SCRIPT_DIR, "../../data/sdftest2/ligands_sdf_split/")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../../results/mcdock_local_test/")
 
 # Box parameters (same as original script)
 CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
