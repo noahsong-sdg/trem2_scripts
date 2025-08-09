@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""
-Minimal UniDock docking script for all ligands in a directory.
-- Centralizes all CLI flags for easy modification.
-- Supports both SDF and PDBQT ligands (no SDF-only enforcement).
-- No batching, no SLURM, no tranche logic.
-"""
+
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 # --- Configuration ---
@@ -46,7 +42,74 @@ MCDOCK_FLAGS = {
 }
 
 
+def get_completed_ligands(output_dir):
+    """
+    Check which ligands already have output files in MultiConfDock-Result directory.
+    
+    Args:
+        output_dir (str): Base output directory containing MultiConfDock-Result subdirectory
+        
+    Returns:
+        set: Set of ligand names that already have SDF output files
+    """
+    result_dir = os.path.join(output_dir, "MultiConfDock-Result")
+    if not os.path.exists(result_dir):
+        return set()
+    
+    completed = set()
+    for sdf_file in os.listdir(result_dir):
+        if sdf_file.endswith('.sdf') and os.path.getsize(os.path.join(result_dir, sdf_file)) > 0:
+            # Extract ligand name (remove .sdf extension)
+            ligand_name = sdf_file[:-4]
+            completed.add(ligand_name)
+    return completed
+
+
+def filter_completed_ligands(ligand_files, completed_ligands):
+    """
+    Remove ligands that are already completed from the input list.
+    
+    Args:
+        ligand_files (list): List of ligand file paths
+        completed_ligands (set): Set of completed ligand names
+        
+    Returns:
+        list: Filtered list of ligand files that still need processing
+    """
+    remaining = []
+    for ligand_file in ligand_files:
+        ligand_name = os.path.splitext(os.path.basename(ligand_file))[0]
+        if ligand_name not in completed_ligands:
+            remaining.append(ligand_file)
+    return remaining
+
+
+def reset_progress():
+    """Reset progress by removing the MultiConfDock-Result directory."""
+    result_dir = os.path.join(OUTPUT_DIR, "MultiConfDock-Result")
+    if os.path.exists(result_dir):
+        import shutil
+        shutil.rmtree(result_dir)
+        print(f"Reset complete: Removed {result_dir}")
+        return True
+    else:
+        print(f"No existing results found at {result_dir}")
+        return False
+
+
 def main():
+    # Check for command line arguments
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--reset":
+            reset_progress()
+            exit(0)
+        elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
+            print("UniDock mcdock with resume capability")
+            print("Usage:")
+            print("  python mcdockv2.py          # Run/resume docking")
+            print("  python mcdockv2.py --reset  # Reset progress and start over")
+            exit(0)
+
     # Validate input files/directories
     if not os.path.exists(RECEPTOR_FILE):
         print(f"Error: Receptor file not found at {RECEPTOR_FILE}")
@@ -57,13 +120,30 @@ def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Collect all ligand files (SDF or PDBQT) recursively
-    ligand_files = sorted(
+    all_ligand_files = sorted(
         [str(p) for p in Path(LIGAND_DIR).rglob("*.sdf")] +
         [str(p) for p in Path(LIGAND_DIR).rglob("*.pdbqt")]
     )
-    if not ligand_files:
+    if not all_ligand_files:
         print(f"No ligand files (.sdf or .pdbqt) found in {LIGAND_DIR} or its subdirectories")
         exit(1)
+
+    # Check for completed ligands and filter
+    print(f"Found {len(all_ligand_files)} total ligand files")
+    completed_ligands = get_completed_ligands(OUTPUT_DIR)
+    
+    if completed_ligands:
+        print(f"Resume detected: {len(completed_ligands)} ligands already completed")
+        ligand_files = filter_completed_ligands(all_ligand_files, completed_ligands)
+        print(f"Remaining ligands to process: {len(ligand_files)}")
+        
+        if not ligand_files:
+            print("All ligands have already been processed!")
+            print("Use --reset flag to start over from scratch")
+            exit(0)
+    else:
+        print("Starting fresh docking run")
+        ligand_files = all_ligand_files
 
     # Write ligand list to file (avoids long command lines)
     ligand_list_file = os.path.join(OUTPUT_DIR, "ligand_list.txt")
@@ -89,12 +169,42 @@ def main():
         print("\n=== UniDock mcdock output ===")
         print(result.stdout)
         print("\n=== UniDock mcdock completed successfully ===")
+        
+        # Final summary
+        final_completed = get_completed_ligands(OUTPUT_DIR)
+        total_completed = len(final_completed)
+        total_ligands = len(all_ligand_files)
+        
+        print(f"\n=== FINAL SUMMARY ===")
+        print(f"Total ligands processed: {total_completed}/{total_ligands}")
+        print(f"Output directory: {os.path.join(OUTPUT_DIR, 'MultiConfDock-Result')}")
+        
+        if total_completed == total_ligands:
+            print("All ligands completed successfully!")
+        else:
+            remaining = total_ligands - total_completed
+            print(f"Remaining ligands: {remaining}")
+            print("Run the script again to resume from where it left off")
+            
     except subprocess.CalledProcessError as e:
         print(f"Error running UniDock mcdock: {e}")
         if e.stdout:
             print("\n[stdout]\n", e.stdout)
         if e.stderr:
             print("\n[stderr]\n", e.stderr)
+        
+        # Show resume information even on failure
+        final_completed = get_completed_ligands(OUTPUT_DIR)
+        if final_completed:
+            print(f"\nProgress saved: {len(final_completed)} ligands completed")
+            print("Run the script again to resume from where it left off")
+        exit(1)
+    except KeyboardInterrupt:
+        print(f"\n\nInterrupted by user!")
+        final_completed = get_completed_ligands(OUTPUT_DIR)
+        if final_completed:
+            print(f"Progress saved: {len(final_completed)} ligands completed")
+            print("Run the script again to resume from where it left off")
         exit(1)
 
 if __name__ == "__main__":
