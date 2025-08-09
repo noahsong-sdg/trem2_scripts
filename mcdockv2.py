@@ -15,6 +15,9 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c1_outputs/")
 CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
+# Chunk processing parameters (for cluster time limit resilience)
+LIGANDS_PER_CHUNK = 8000  # Number of ligands per mcdock execution
+
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
     "--receptor": RECEPTOR_FILE,
@@ -25,8 +28,8 @@ MCDOCK_FLAGS = {
     "--size_x": str(SIZE_X),
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
-    # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    # "--savedir": os.path.join(OUTPUT_DIR, "MultiConfDock-Result"),
+    "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
+    "--savedir": os.path.join(OUTPUT_DIR, "MultiConfDock-Result"),
     "--batch_size": "800", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
@@ -82,6 +85,79 @@ def filter_completed_ligands(ligand_files, completed_ligands):
         if ligand_name not in completed_ligands:
             remaining.append(ligand_file)
     return remaining
+
+
+def create_chunks(ligand_files, chunk_size):
+    """
+    Split ligand files into chunks of specified size.
+    
+    Args:
+        ligand_files (list): List of ligand file paths
+        chunk_size (int): Number of ligands per chunk
+        
+    Returns:
+        list: List of chunks, where each chunk is a list of ligand file paths
+    """
+    chunks = []
+    for i in range(0, len(ligand_files), chunk_size):
+        chunk = ligand_files[i:i + chunk_size]
+        chunks.append(chunk)
+    return chunks
+
+
+def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
+    """
+    Run UniDock mcdock on a single chunk of ligands.
+    
+    Args:
+        chunk_ligands (list): List of ligand file paths for this chunk
+        chunk_num (int): Current chunk number (1-indexed)
+        total_chunks (int): Total number of chunks
+        
+    Returns:
+        bool: True if chunk completed successfully, False otherwise
+    """
+    print(f"\n=== Processing Chunk {chunk_num}/{total_chunks} ({len(chunk_ligands)} ligands) ===")
+    print(f"UniDock will process these in batches of 800 ligands internally")
+    
+    # Create chunk-specific ligand list file
+    chunk_ligand_list = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_ligand_list.txt")
+    with open(chunk_ligand_list, "w") as f:
+        for ligand in chunk_ligands:
+            f.write(f"{os.path.abspath(ligand)}\n")
+    
+    # Build command for this chunk
+    cmd = ["unidocktools", "mcdock"]
+    for flag, value in MCDOCK_FLAGS.items():
+        if flag == "--gen_conf":
+            if value is not None:
+                cmd.append(flag)
+        elif value is not None:
+            cmd.extend([flag, value])
+    cmd.extend(["--ligand_index", chunk_ligand_list])
+    
+    print(f"Running chunk {chunk_num} command:")
+    print(" ", " ".join(cmd))
+    
+    try:
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True)
+        print(f"Chunk {chunk_num} completed successfully")
+        print(result.stdout)
+        
+        # Clean up chunk ligand list file
+        os.remove(chunk_ligand_list)
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Error in chunk {chunk_num}: {e}")
+        if e.stdout:
+            print(f"[stdout] {e.stdout}")
+        if e.stderr:
+            print(f"[stderr] {e.stderr}")
+        return False
+    except KeyboardInterrupt:
+        print(f"\nChunk {chunk_num} interrupted by user!")
+        raise
 
 
 def reset_progress():
@@ -145,67 +221,77 @@ def main():
         print("Starting fresh docking run")
         ligand_files = all_ligand_files
 
-    # Write ligand list to file (avoids long command lines)
-    ligand_list_file = os.path.join(OUTPUT_DIR, "ligand_list.txt")
-    with open(ligand_list_file, "w") as f:
-        for ligand in ligand_files:
-            f.write(f"{os.path.abspath(ligand)}\n")
-
-    # Build command
-    cmd = ["unidocktools", "mcdock"]
-    for flag, value in MCDOCK_FLAGS.items():
-        if flag == "--gen_conf":
-            if value is not None:
-                cmd.append(flag)
-        elif value is not None:
-            cmd.extend([flag, value])
-    cmd.extend(["--ligand_index", ligand_list_file])
-
-    print("Running UniDock mcdock with command:")
-    print(" ", " ".join(cmd))
-
+    # Create chunks for processing
+    chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)
+    total_chunks = len(chunks)
+    
+    print(f"\nChunk Processing Plan:")
+    print(f"  Total ligands to process: {len(ligand_files)}")
+    print(f"  Ligands per chunk: {LIGANDS_PER_CHUNK}")
+    print(f"  Total chunks: {total_chunks}")
+    print(f"  UniDock batch size: 800 ligands (internal)")
+    
+    # Process chunks sequentially
+    successful_chunks = 0
+    failed_chunks = 0
+    
     try:
-        result = subprocess.run(cmd, check=True, text=True, capture_output=True)
-        print("\n=== UniDock mcdock output ===")
-        print(result.stdout)
-        print("\n=== UniDock mcdock completed successfully ===")
-        
-        # Final summary
-        final_completed = get_completed_ligands(OUTPUT_DIR)
-        total_completed = len(final_completed)
-        total_ligands = len(all_ligand_files)
-        
-        print(f"\n=== FINAL SUMMARY ===")
-        print(f"Total ligands processed: {total_completed}/{total_ligands}")
-        print(f"Output directory: {os.path.join(OUTPUT_DIR, 'MultiConfDock-Result')}")
-        
-        if total_completed == total_ligands:
-            print("All ligands completed successfully!")
-        else:
-            remaining = total_ligands - total_completed
-            print(f"Remaining ligands: {remaining}")
-            print("Run the script again to resume from where it left off")
+        for chunk_num, chunk_ligands in enumerate(chunks, 1):
+            # Check if any ligands in this chunk are already completed
+            chunk_completed = get_completed_ligands(OUTPUT_DIR)
+            remaining_in_chunk = filter_completed_ligands(chunk_ligands, chunk_completed)
             
-    except subprocess.CalledProcessError as e:
-        print(f"Error running UniDock mcdock: {e}")
-        if e.stdout:
-            print("\n[stdout]\n", e.stdout)
-        if e.stderr:
-            print("\n[stderr]\n", e.stderr)
-        
-        # Show resume information even on failure
-        final_completed = get_completed_ligands(OUTPUT_DIR)
-        if final_completed:
-            print(f"\nProgress saved: {len(final_completed)} ligands completed")
-            print("Run the script again to resume from where it left off")
-        exit(1)
+            if not remaining_in_chunk:
+                print(f"\nSkipping Chunk {chunk_num}/{total_chunks} - all ligands already completed")
+                successful_chunks += 1
+                continue
+            
+            if len(remaining_in_chunk) < len(chunk_ligands):
+                print(f"Chunk {chunk_num}: {len(remaining_in_chunk)}/{len(chunk_ligands)} ligands remaining")
+            
+            # Run the chunk with remaining ligands
+            chunk_success = run_mcdock_chunk(remaining_in_chunk, chunk_num, total_chunks)
+            
+            if chunk_success:
+                successful_chunks += 1
+                
+                # Show progress after each chunk
+                current_completed = get_completed_ligands(OUTPUT_DIR)
+                total_completed = len(current_completed)
+                print(f"Progress: {total_completed}/{len(all_ligand_files)} ligands completed")
+            else:
+                failed_chunks += 1
+                print(f"Chunk {chunk_num} failed - stopping execution")
+                break
+                
     except KeyboardInterrupt:
-        print(f"\n\nInterrupted by user!")
-        final_completed = get_completed_ligands(OUTPUT_DIR)
-        if final_completed:
-            print(f"Progress saved: {len(final_completed)} ligands completed")
+        print(f"\n\nProcessing interrupted by user!")
+        current_completed = get_completed_ligands(OUTPUT_DIR)
+        if current_completed:
+            print(f"Progress saved: {len(current_completed)} ligands completed")
             print("Run the script again to resume from where it left off")
         exit(1)
+    
+    # Final summary
+    final_completed = get_completed_ligands(OUTPUT_DIR)
+    total_completed = len(final_completed)
+    total_ligands = len(all_ligand_files)
+    
+    print(f"\n=== FINAL SUMMARY ===")
+    print(f"Chunks processed: {successful_chunks}/{total_chunks}")
+    print(f"Total ligands completed: {total_completed}/{total_ligands}")
+    print(f"Output directory: {os.path.join(OUTPUT_DIR, 'MultiConfDock-Result')}")
+    
+    if failed_chunks > 0:
+        print(f"Failed chunks: {failed_chunks}")
+        print("Run the script again to retry failed chunks")
+        exit(1)
+    elif total_completed == total_ligands:
+        print("All ligands completed successfully!")
+    else:
+        remaining = total_ligands - total_completed
+        print(f"Remaining ligands: {remaining}")
+        print("Run the script again to resume from where it left off")
 
 if __name__ == "__main__":
     main() 
