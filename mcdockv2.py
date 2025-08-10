@@ -16,7 +16,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 8000  # Number of ligands per mcdock execution
+LIGANDS_PER_CHUNK = 5000  # Number of ligands per mcdock execution
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
@@ -28,8 +28,8 @@ MCDOCK_FLAGS = {
     "--size_x": str(SIZE_X),
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
-    "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    "--savedir": os.path.join(OUTPUT_DIR, "MultiConfDock-Result"),
+    # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
+    "--savedir": os.path.join(OUTPUT_DIR, "c1_outputs"),
     "--batch_size": "800", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
