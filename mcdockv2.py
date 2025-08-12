@@ -36,7 +36,7 @@ MCDOCK_FLAGS = {
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresults"),
+    "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresult"),
     "--batch_size": "1000", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
@@ -54,15 +54,15 @@ MCDOCK_FLAGS = {
 
 def get_completed_ligands(output_dir):
     """
-    Check which ligands already have output files in MultiConfDock-Result directory.
+    Check which ligands already have output files in multiconfdockresult directory.
     
     Args:
-        output_dir (str): Base output directory containing MultiConfDock-Result subdirectory
+        output_dir (str): Base output directory containing multiconfdockresult subdirectory
         
     Returns:
         set: Set of ligand names that already have SDF output files
     """
-    result_dir = os.path.join(output_dir, "MultiConfDock-Result")
+    result_dir = os.path.join(output_dir, "multiconfdockresult")
     if not os.path.exists(result_dir):
         return set()
     
@@ -169,8 +169,8 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
 
 
 def reset_progress():
-    """Reset progress by removing the MultiConfDock-Result directory."""
-    result_dir = os.path.join(OUTPUT_DIR, "MultiConfDock-Result")
+    """Reset progress by removing the multiconfdockresult directory."""
+    result_dir = os.path.join(OUTPUT_DIR, "multiconfdockresult")
     if os.path.exists(result_dir):
         import shutil
         shutil.rmtree(result_dir)
@@ -288,7 +288,7 @@ def main():
     logging.info(f"\n=== FINAL SUMMARY ===")
     logging.info(f"Chunks processed: {successful_chunks}/{total_chunks}")
     logging.info(f"Total ligands completed: {total_completed}/{total_ligands}")
-    logging.info(f"Output directory: {os.path.join(OUTPUT_DIR, 'MultiConfDock-Result')}")
+    logging.info(f"Output directory: {os.path.join(OUTPUT_DIR, 'multiconfdockresult')}")
     
     if failed_chunks > 0:
         logging.error(f"Failed chunks: {failed_chunks}")
