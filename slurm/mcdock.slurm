@@ -28,4 +28,5 @@ module load anaconda
 
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
+echo "activated env, running script"
 python $SCRIPT_DIR/mcdockv2.py
