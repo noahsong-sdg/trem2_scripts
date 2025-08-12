@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --job-name=Ig
+#SBATCH --job-name=mcdock_b
 #SBATCH --output=mcdock.%j.out
 #SBATCH --error=mcdock_%j.err
 #SBATCH --mail-type=FAIL,END
@@ -17,7 +17,6 @@ module load cuda/11.8
 module load cmake
 module load anaconda
 
-eval "$(conda shell.bash hook)"
 SCRIPT_DIR="/scratch/alpine/noso3320/trem2/unidock/scripts"
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
