@@ -6,8 +6,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --job-name=mcdock_b
-#SBATCH --output=mcdock.%j.out
-#SBATCH --error=mcdock_%j.err
+#SBATCH --output=mcdockb_%j.out
+#SBATCH --error=mcdockb_%j.err
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=noso3320@colorado.edu
 
