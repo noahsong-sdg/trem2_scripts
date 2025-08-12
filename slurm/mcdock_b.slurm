@@ -1,3 +1,4 @@
+#!/bin/bash
 #SBATCH --time=1-00:00:00
 #SBATCH --qos=preemptable
 #SBATCH --gres=gpu:1
