@@ -20,4 +20,4 @@ module load anaconda
 SCRIPT_DIR="/scratch/alpine/noso3320/trem2/unidock/scripts"
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
-python $SCRIPT_DIR/mcdock_b.py
+python $SCRIPT_DIR/mcdockv2_b.py
