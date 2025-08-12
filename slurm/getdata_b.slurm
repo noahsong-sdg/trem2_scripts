@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --time=24:00:00
 #SBATCH --qos=preemptable
-#SBATCH --account=ucb-general
 #SBATCH --job-name=get_column_three
+#SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
