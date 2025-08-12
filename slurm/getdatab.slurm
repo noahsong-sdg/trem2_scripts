@@ -25,4 +25,4 @@ module load anaconda
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 
-python scripts/b/getdata_sdf_b.py
+python scripts/getdata_sdf_b.py
