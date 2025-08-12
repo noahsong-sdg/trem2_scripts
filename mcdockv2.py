@@ -29,8 +29,8 @@ MCDOCK_FLAGS = {
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    "--savedir": os.path.join(OUTPUT_DIR, "c1_outputs"),
-    "--batch_size": "800", # 1200 caused broken pipe and ran out of memory
+    "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresults"),
+    "--batch_size": "1000", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -194,7 +194,7 @@ def main():
         print(f"Error: Ligand directory not found at {LIGAND_DIR}")
         exit(1)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-
+    
     # Collect all ligand files (SDF or PDBQT) recursively
     all_ligand_files = sorted(
         [str(p) for p in Path(LIGAND_DIR).rglob("*.sdf")] +
