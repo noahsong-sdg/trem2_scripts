@@ -87,14 +87,16 @@ def download_single_file(args):
     url, output_dir, filename = args
     return download_zinc_subset(url, output_dir, filename)
 
-def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4):
+def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, max_retries=5):
     """
     Reads a list of URLs from a .uri file and downloads SDF data from each using parallel processing.
+    Retries failed downloads up to max_retries times.
 
     Args:
         uri_file_path (str): Path to the .uri file containing URLs.
         base_output_dir (str): The base directory to save downloaded files.
         max_workers (int): Number of parallel download threads.
+        max_retries (int): Maximum number of retry attempts for failed downloads.
     """
     if not os.path.exists(uri_file_path):
         print(f"Error: URI file not found at {uri_file_path}")
@@ -113,13 +115,14 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4):
         return 0, 0
     
     print(f"Starting parallel download of {len(urls)} SDF files using {max_workers} workers...")
+    print(f"Will retry failed downloads up to {max_retries} times")
     
     # Reset progress counters
     with download_lock:
         progress_counter['completed'] = 0
         progress_counter['failed'] = 0
     
-    # Prepare download arguments
+    # Prepare initial download arguments
     download_args = []
     for i, url in enumerate(urls, 1):
         filename = url.split('/')[-1]
@@ -127,33 +130,70 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4):
             filename = f"downloaded_ligand_{i}.sdf.gz"
         download_args.append((url, base_output_dir, filename))
     
-    # Execute parallel downloads
-    downloaded_files_count = 0
-    failed_downloads_count = 0
+    # Track failed downloads for retries
+    failed_downloads = []
+    total_downloaded = 0
+    total_failed = 0
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all download tasks
-        future_to_url = {executor.submit(download_single_file, args): args[0] 
-                        for args in download_args}
+    # Execute downloads with retries
+    for attempt in range(1, max_retries + 1):
+        if attempt == 1:
+            print(f"\n=== ATTEMPT {attempt}: Initial download ===")
+            current_args = download_args
+        else:
+            if not failed_downloads:
+                print(f"\n=== All downloads successful after {attempt-1} attempts ===")
+                break
+            print(f"\n=== ATTEMPT {attempt}: Retrying {len(failed_downloads)} failed downloads ===")
+            current_args = failed_downloads
+            failed_downloads = []  # Reset for next attempt
         
-        # Process completed downloads
-        for future in as_completed(future_to_url):
-            url = future_to_url[future]
-            try:
-                result = future.result()
-                if result:
-                    downloaded_files_count += 1
-                else:
-                    failed_downloads_count += 1
-            except Exception as e:
-                failed_downloads_count += 1
-                print(f"✗ Exception downloading {url}: {e}")
+        # Reset progress counters for this attempt
+        with download_lock:
+            progress_counter['completed'] = 0
+            progress_counter['failed'] = 0
+        
+        # Execute parallel downloads for current attempt
+        attempt_downloaded = 0
+        attempt_failed = 0
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all download tasks for this attempt
+            future_to_args = {executor.submit(download_single_file, args): args 
+                            for args in current_args}
+            
+            # Process completed downloads
+            for future in as_completed(future_to_args):
+                args = future_to_args[future]
+                url = args[0]
+                try:
+                    result = future.result()
+                    if result:
+                        attempt_downloaded += 1
+                    else:
+                        attempt_failed += 1
+                        failed_downloads.append(args)  # Add to retry list
+                except Exception as e:
+                    attempt_failed += 1
+                    failed_downloads.append(args)  # Add to retry list
+                    print(f"✗ Exception downloading {url}: {e}")
+        
+        total_downloaded += attempt_downloaded
+        total_failed = len(failed_downloads)
+        
+        print(f"Attempt {attempt} results: {attempt_downloaded} successful, {attempt_failed} failed")
+        
+        if attempt < max_retries and failed_downloads:
+            print(f"Retrying {len(failed_downloads)} failed downloads in next attempt...")
+        elif failed_downloads:
+            print(f"Reached maximum retries ({max_retries}). {len(failed_downloads)} downloads still failed.")
     
-    print(f"\n=== PARALLEL DOWNLOAD COMPLETE ===")
-    print(f"✓ Successful downloads: {downloaded_files_count}")
-    print(f"✗ Failed downloads: {failed_downloads_count}")
+    print(f"\n=== FINAL DOWNLOAD SUMMARY ===")
+    print(f"✓ Total successful downloads: {total_downloaded}")
+    print(f"✗ Total failed downloads: {total_failed}")
+    print(f"📊 Success rate: {total_downloaded/(total_downloaded+total_failed)*100:.1f}%")
     
-    return downloaded_files_count, failed_downloads_count
+    return total_downloaded, total_failed
 
 def extract_sdf_files(raw_dir, output_dir, max_workers=4):
     """
@@ -413,9 +453,9 @@ if __name__ == "__main__":
             print("Please ensure the URI file exists with URLs to SDF downloads.")
             exit(1)
         
-        # Download all files with parallel processing
+        # Download all files with parallel processing and retries
         successful_downloads, failed_downloads = download_all_from_uri_file(
-            URI_FILE, RAW_LIGANDS_DIR, max_workers=DOWNLOAD_WORKERS)
+            URI_FILE, RAW_LIGANDS_DIR, max_workers=DOWNLOAD_WORKERS, max_retries=5)
                 
         print(f"\n=== DOWNLOAD SUMMARY ===")
         print(f"✓ Successful downloads: {successful_downloads}")
