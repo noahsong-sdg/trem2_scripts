@@ -23,7 +23,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 5000  # Number of ligands per mcdock execution
+LIGANDS_PER_CHUNK = 1000  # Number of ligands per mcdock execution
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
     "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresult"),
-    "--batch_size": "1000", # 1200 caused broken pipe and ran out of memory
+    "--batch_size": "500", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -51,6 +51,56 @@ MCDOCK_FLAGS = {
     "--gen_conf": "1",  # Flag only, no value
 }
 
+
+def validate_sdf_file(sdf_path):
+    """
+    Validate an SDF file using Open Babel to check if it's readable.
+    
+    Args:
+        sdf_path (str): Path to the SDF file to validate
+        
+    Returns:
+        bool: True if file is valid, False otherwise
+    """
+    try:
+        # Use Open Babel to validate the SDF file
+        result = subprocess.run(
+            ['obabel', sdf_path, '-osdf', '-O', '/dev/null'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+        return False
+
+def filter_valid_ligands(ligand_files):
+    """
+    Filter out invalid/corrupted SDF files before processing.
+    
+    Args:
+        ligand_files (list): List of ligand file paths
+        
+    Returns:
+        tuple: (valid_files, invalid_files)
+    """
+    valid_files = []
+    invalid_files = []
+    
+    logging.info(f"Validating {len(ligand_files)} ligand files...")
+    
+    for i, ligand_file in enumerate(ligand_files, 1):
+        if i % 100 == 0:
+            logging.info(f"Validated {i}/{len(ligand_files)} files...")
+        
+        if validate_sdf_file(ligand_file):
+            valid_files.append(ligand_file)
+        else:
+            invalid_files.append(ligand_file)
+            logging.warning(f"Invalid SDF file detected: {os.path.basename(ligand_file)}")
+    
+    logging.info(f"Validation complete: {len(valid_files)} valid, {len(invalid_files)} invalid")
+    return valid_files, invalid_files
 
 def get_completed_ligands(output_dir):
     """
@@ -228,6 +278,23 @@ def main():
     else:
         logging.info("Starting fresh docking run")
         ligand_files = all_ligand_files
+
+    # Validate ligand files to filter out corrupted ones
+    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
+    
+    if invalid_ligands:
+        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
+        for invalid_file in invalid_ligands[:10]:  # Show first 10
+            logging.warning(f"  - {os.path.basename(invalid_file)}")
+        if len(invalid_ligands) > 10:
+            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
+    
+    if not valid_ligands:
+        logging.error("No valid ligand files found after validation!")
+        exit(1)
+    
+    ligand_files = valid_ligands  # Use only valid files
+    logging.info(f"Proceeding with {len(ligand_files)} valid ligand files")
 
     # Create chunks for processing
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)

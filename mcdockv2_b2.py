@@ -36,7 +36,7 @@ MCDOCK_FLAGS = {
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresult"),
+    "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
     "--batch_size": "500", # Reduced from 1000 to prevent OOM kills
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
