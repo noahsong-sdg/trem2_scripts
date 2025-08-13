@@ -186,8 +186,8 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
         
         if attempt < max_retries and failed_downloads:
             print(f"Retrying {len(failed_downloads)} failed downloads in next attempt...")
-            print(f"Waiting 10 minutes before retry attempt {attempt + 1}...")
-            time.sleep(600)  # 10 minutes = 600 seconds
+            print(f"Waiting 60 minutes before retry attempt {attempt + 1}...")
+            time.sleep(3600)  # 60 minutes = 600 seconds
         elif failed_downloads:
             print(f"Reached maximum retries ({max_retries}). {len(failed_downloads)} downloads still failed.")
     
