@@ -36,7 +36,7 @@ MCDOCK_FLAGS = {
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    "--savedir": os.path.join(OUTPUT_DIR, "multiconfdockresult"),
+    "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
     "--batch_size": "500", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
@@ -104,15 +104,15 @@ def filter_valid_ligands(ligand_files):
 
 def get_completed_ligands(output_dir):
     """
-    Check which ligands already have output files in multiconfdockresult directory.
+    Check which ligands already have output files in mcresult directory.
     
     Args:
-        output_dir (str): Base output directory containing multiconfdockresult subdirectory
+        output_dir (str): Base output directory containing mcresult subdirectory
         
     Returns:
         set: Set of ligand names that already have SDF output files
     """
-    result_dir = os.path.join(output_dir, "multiconfdockresult")
+    result_dir = os.path.join(output_dir, "mcresult")
     if not os.path.exists(result_dir):
         return set()
     
@@ -219,8 +219,8 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
 
 
 def reset_progress():
-    """Reset progress by removing the multiconfdockresult directory."""
-    result_dir = os.path.join(OUTPUT_DIR, "multiconfdockresult")
+    """Reset progress by removing the mcresult directory."""
+    result_dir = os.path.join(OUTPUT_DIR, "mcresult")
     if os.path.exists(result_dir):
         import shutil
         shutil.rmtree(result_dir)
@@ -360,7 +360,7 @@ def main():
         logging.error(f"Failed chunks: {failed_chunks} ({failed_list_str})")
         logging.info("You can re-run the script to retry only remaining ligands; processed results are preserved.")
     logging.info(f"Total ligands completed: {total_completed}/{total_ligands}")
-    logging.info(f"Output directory: {os.path.join(OUTPUT_DIR, 'multiconfdockresult')}")
+    logging.info(f"Output directory: {os.path.join(OUTPUT_DIR, 'mcresult')}")
     if failed_chunks == 0 and total_completed == total_ligands:
         logging.info("All ligands completed successfully!")
     else:
