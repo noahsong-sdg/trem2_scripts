@@ -23,7 +23,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 1000  # Reduced from 5000 to reduce memory usage
+LIGANDS_PER_CHUNK = 500  # Reduced from 5000 to reduce memory usage
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
@@ -37,17 +37,17 @@ MCDOCK_FLAGS = {
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "500", # Reduced from 1000 to prevent OOM kills
+    "--batch_size": "100", # Reduced from 1000 to prevent OOM kills
     "--scoring_function_rigid_docking": "vina",
-    "--exhaustiveness_rigid_docking": "32",
+    "--exhaustiveness_rigid_docking": "8",
     "--num_modes_rigid_docking": "3",
-    "--topn_rigid_docking": "20",
+    "--topn_rigid_docking": "50",
     "--scoring_function_local_refine": "vina",
-    "--exhaustiveness_local_refine": "64",
+    "--exhaustiveness_local_refine": "16",
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
-    "--max_num_confs_per_ligand": "20",
+    "--max_num_confs_per_ligand": "10",
     "--gen_conf": "1",  # Flag only, no value
 }
 
