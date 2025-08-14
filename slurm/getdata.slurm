@@ -6,7 +6,7 @@
 #SBATCH --job-name=get_column_one
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=2
 #SBATCH --output=c1_%j.out
 #SBATCH --error=c1_%j.err
 
