@@ -39,11 +39,11 @@ MCDOCK_FLAGS = {
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
     "--batch_size": "500", # Reduced from 1000 to prevent OOM kills
     "--scoring_function_rigid_docking": "vina",
-    "--exhaustiveness_rigid_docking": "32",
+    "--exhaustiveness_rigid_docking": "32", # default 64
     "--num_modes_rigid_docking": "3",
-    "--topn_rigid_docking": "20",
-    "--scoring_function_local_refine": "vina",
-    "--exhaustiveness_local_refine": "64",
+    "--topn_rigid_docking": "20", # no idea what this means
+    "--scoring_function_local_refine": "vina", # yess vina!!
+    "--exhaustiveness_local_refine": "64", # default 128
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",

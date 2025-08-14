@@ -309,6 +309,7 @@ def main():
     # Process chunks sequentially
     successful_chunks = 0
     failed_chunks = 0
+    failed_chunk_numbers = []
     
     try:
         for chunk_num, chunk_ligands in enumerate(chunks, 1):
@@ -336,8 +337,8 @@ def main():
                 logging.info(f"Progress: {total_completed}/{len(all_ligand_files)} ligands completed")
             else:
                 failed_chunks += 1
-                logging.error(f"Chunk {chunk_num} failed - stopping execution")
-                break
+                failed_chunk_numbers.append(chunk_num)
+                logging.error(f"Chunk {chunk_num} failed - continuing with remaining chunks")
                 
     except KeyboardInterrupt:
         logging.error(f"\n\nProcessing interrupted by user!")
@@ -353,15 +354,14 @@ def main():
     total_ligands = len(all_ligand_files)
     
     logging.info(f"\n=== FINAL SUMMARY ===")
-    logging.info(f"Chunks processed: {successful_chunks}/{total_chunks}")
+    logging.info(f"Chunks processed successfully: {successful_chunks}/{total_chunks}")
+    if failed_chunks > 0:
+        failed_list_str = ", ".join(str(n) for n in failed_chunk_numbers)
+        logging.error(f"Failed chunks: {failed_chunks} ({failed_list_str})")
+        logging.info("You can re-run the script to retry only remaining ligands; processed results are preserved.")
     logging.info(f"Total ligands completed: {total_completed}/{total_ligands}")
     logging.info(f"Output directory: {os.path.join(OUTPUT_DIR, 'multiconfdockresult')}")
-    
-    if failed_chunks > 0:
-        logging.error(f"Failed chunks: {failed_chunks}")
-        logging.info("Run the script again to retry failed chunks")
-        exit(1)
-    elif total_completed == total_ligands:
+    if failed_chunks == 0 and total_completed == total_ligands:
         logging.info("All ligands completed successfully!")
     else:
         remaining = total_ligands - total_completed
