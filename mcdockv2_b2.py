@@ -43,7 +43,7 @@ MCDOCK_FLAGS = {
     "--num_modes_rigid_docking": "3",
     "--topn_rigid_docking": "20", # no idea what this means
     "--scoring_function_local_refine": "vina", # yess vina!!
-    "--exhaustiveness_local_refine": "64", # default 128
+    "--exhaustiveness_local_refine": "32", # default 128
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
