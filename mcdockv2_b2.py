@@ -47,7 +47,7 @@ MCDOCK_FLAGS = {
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
-    "--max_num_confs_per_ligand": "50",
+    "--max_num_confs_per_ligand": "20",
     "--gen_conf": "1",  # Flag only, no value
 }
 
