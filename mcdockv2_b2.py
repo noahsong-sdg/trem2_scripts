@@ -115,7 +115,7 @@ def create_chunks(ligand_files, chunk_size):
 def get_memory_info():
     """Get memory usage information using built-in Python modules."""
     try:
-        with open('/proc/meminfo', 'r') as f:
+        with open('/proc/meminfo', 'r', encoding='utf-8') as f:
             lines = f.readlines()
         
         mem_info = {}
@@ -135,7 +135,7 @@ def get_memory_info():
                 'used_gb': used / (1024**3),
                 'total_gb': mem_info['total'] / (1024**3)
             }
-    except (FileNotFoundError, IndexError, ValueError):
+    except (FileNotFoundError, IndexError, ValueError, IOError, OSError):
         pass
     
     # Fallback for non-Linux systems or if /proc/meminfo is not available
@@ -166,13 +166,27 @@ def test_ligand_file_access(ligand_files):
                 # Test if file has content
                 if os.path.getsize(ligand_file) > 0:
                     # Test if we can read the first few lines
-                    with open(ligand_file, 'r') as f:
-                        first_lines = [f.readline() for _ in range(5)]
-                        if any(line.strip() for line in first_lines):
-                            accessible.append(ligand_file)
-                        else:
-                            inaccessible.append(ligand_file)
-                            logging.warning(f"Empty or unreadable file: {os.path.basename(ligand_file)}")
+                    try:
+                        with open(ligand_file, 'r', encoding='utf-8', errors='ignore') as f:
+                            first_lines = []
+                            for _ in range(5):
+                                try:
+                                    line = f.readline()
+                                    if line:
+                                        first_lines.append(line)
+                                    else:
+                                        break
+                                except (IOError, OSError):
+                                    break
+                            
+                            if first_lines and any(line.strip() for line in first_lines):
+                                accessible.append(ligand_file)
+                            else:
+                                inaccessible.append(ligand_file)
+                                logging.warning(f"Empty or unreadable file: {os.path.basename(ligand_file)}")
+                    except (IOError, OSError, UnicodeDecodeError) as e:
+                        inaccessible.append(ligand_file)
+                        logging.warning(f"Error reading file {os.path.basename(ligand_file)}: {e}")
                 else:
                     inaccessible.append(ligand_file)
                     logging.warning(f"Zero-size file: {os.path.basename(ligand_file)}")
@@ -212,11 +226,14 @@ def test_ligand_list_file_creation(ligand_files, test_dir):
             logging.info(f"Test ligand list file created: {test_list_file}")
             
             # Show first few lines for debugging
-            with open(test_list_file, 'r') as f:
-                lines = f.readlines()
-                logging.info(f"First 3 lines of test ligand list:")
-                for i, line in enumerate(lines[:3], 1):
-                    logging.info(f"  {i}: {line.strip()}")
+            try:
+                with open(test_list_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    logging.info(f"First 3 lines of test ligand list:")
+                    for i, line in enumerate(lines[:3], 1):
+                        logging.info(f"  {i}: {line.strip()}")
+            except (IOError, OSError) as e:
+                logging.warning(f"Could not read test list file for debugging: {e}")
             
             return True
         else:
