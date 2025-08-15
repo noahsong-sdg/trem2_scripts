@@ -9,7 +9,7 @@
 #SBATCH --ntasks=1
 
 #SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=16
 #SBATCH --output=mcdock_%j.out
 #SBATCH --error=mcdock_%j.err
 #SBATCH --mail-type=FAIL,END

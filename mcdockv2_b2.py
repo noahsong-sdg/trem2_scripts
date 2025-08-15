@@ -118,8 +118,25 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
         
     except subprocess.CalledProcessError as e:
         logging.error(f"Chunk {chunk_num} failed: {e}")
+        if e.stderr:
+            logging.error(f"STDERR: {e.stderr}")
+        if e.stdout:
+            logging.error(f"STDOUT: {e.stdout}")
+        
         if "Bad input file" in str(e.stderr):
             logging.error("Bad input file error detected")
+            # Try to extract the problematic filename
+            error_lines = str(e.stderr).split('\n')
+            for line in error_lines:
+                if "Bad input file" in line and ".sdf" in line:
+                    logging.error(f"Problematic file: {line}")
+                    # Extract just the filename
+                    if "obabel_" in line:
+                        parts = line.split('/')
+                        for part in parts:
+                            if part.endswith('.sdf'):
+                                logging.error(f"Failing SDF file: {part}")
+                                break
         return False
     except subprocess.TimeoutExpired:
         logging.error(f"Chunk {chunk_num} timed out")
@@ -159,19 +176,38 @@ def run_diagnostic_tests():
     accessible = quick_file_test(all_files[:50])
     logging.info(f"File access test: {len(accessible)}/50 accessible")
     
-    # Test 4: Single ligand test
-    if len(all_files) > 0:
-        test_file = all_files[0]
-        test_list = os.path.join(OUTPUT_DIR, "test_single.txt")
+    # Test 4: Test first few files individually
+    logging.info("Testing first 5 files individually...")
+    for i, test_file in enumerate(all_files[:5]):
+        logging.info(f"Testing file {i+1}/5: {os.path.basename(test_file)}")
+        
+        test_list = os.path.join(OUTPUT_DIR, f"test_single_{i}.txt")
         with open(test_list, "w") as f:
             f.write(f"{os.path.abspath(test_file)}\n")
         
-        cmd = ["unidocktools", "mcdock", "--receptor", RECEPTOR_FILE, "--ligand_index", test_list]
+        # Use the same command structure as chunks
+        cmd = ["unidocktools", "mcdock"]
+        for flag, value in MCDOCK_FLAGS.items():
+            if flag == "--gen_conf":
+                cmd.append(flag)
+            elif value is not None:
+                cmd.extend([flag, value])
+        cmd.extend(["--ligand_index", test_list])
+        
         try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=3600, stdin=subprocess.DEVNULL)
-            logging.info("Single ligand test: PASSED")
-        except:
-            logging.error("Single ligand test: FAILED")
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=1800, stdin=subprocess.DEVNULL)
+            logging.info(f"  ✓ {os.path.basename(test_file)}: PASSED")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"  ✗ {os.path.basename(test_file)}: FAILED")
+            if "Bad input file" in str(e.stderr):
+                logging.error(f"    Bad input file error in {os.path.basename(test_file)}")
+            logging.error(f"    STDERR: {e.stderr}")
+        except Exception as e:
+            logging.error(f"  ✗ {os.path.basename(test_file)}: ERROR - {e}")
+        
+        # Clean up test file
+        if os.path.exists(test_list):
+            os.remove(test_list)
     
     logging.info("Diagnostic tests complete")
     return True
