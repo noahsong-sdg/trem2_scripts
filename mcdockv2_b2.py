@@ -141,9 +141,140 @@ def get_memory_info():
     # Fallback for non-Linux systems or if /proc/meminfo is not available
     return None
 
+def test_ligand_file_access(ligand_files):
+    """
+    Test if all ligand files are accessible and readable.
+    
+    Args:
+        ligand_files (list): List of ligand file paths to test
+        
+    Returns:
+        tuple: (accessible_files, inaccessible_files)
+    """
+    accessible = []
+    inaccessible = []
+    
+    logging.info(f"Testing file access for {len(ligand_files)} files...")
+    
+    for i, ligand_file in enumerate(ligand_files, 1):
+        if i % 100 == 0:
+            logging.info(f"Tested {i}/{len(ligand_files)} files...")
+        
+        try:
+            # Test if file exists and is readable
+            if os.path.exists(ligand_file) and os.access(ligand_file, os.R_OK):
+                # Test if file has content
+                if os.path.getsize(ligand_file) > 0:
+                    # Test if we can read the first few lines
+                    with open(ligand_file, 'r') as f:
+                        first_lines = [f.readline() for _ in range(5)]
+                        if any(line.strip() for line in first_lines):
+                            accessible.append(ligand_file)
+                        else:
+                            inaccessible.append(ligand_file)
+                            logging.warning(f"Empty or unreadable file: {os.path.basename(ligand_file)}")
+                else:
+                    inaccessible.append(ligand_file)
+                    logging.warning(f"Zero-size file: {os.path.basename(ligand_file)}")
+            else:
+                inaccessible.append(ligand_file)
+                logging.warning(f"File not accessible: {os.path.basename(ligand_file)}")
+        except Exception as e:
+            inaccessible.append(ligand_file)
+            logging.warning(f"Error testing file {os.path.basename(ligand_file)}: {e}")
+    
+    logging.info(f"File access test complete: {len(accessible)} accessible, {len(inaccessible)} inaccessible")
+    return accessible, inaccessible
+
+def test_ligand_list_file_creation(ligand_files, test_dir):
+    """
+    Test if we can create a valid ligand list file that UniDock can read.
+    
+    Args:
+        ligand_files (list): List of ligand file paths to test
+        test_dir (str): Directory to create test files
+        
+    Returns:
+        bool: True if test passes, False otherwise
+    """
+    logging.info("Testing ligand list file creation...")
+    
+    # Create test ligand list file
+    test_list_file = os.path.join(test_dir, "test_ligand_list.txt")
+    
+    try:
+        with open(test_list_file, 'w') as f:
+            for ligand in ligand_files[:10]:  # Test with first 10 files
+                f.write(f"{os.path.abspath(ligand)}\n")
+        
+        # Test if file was created and has content
+        if os.path.exists(test_list_file) and os.path.getsize(test_list_file) > 0:
+            logging.info(f"Test ligand list file created: {test_list_file}")
+            
+            # Show first few lines for debugging
+            with open(test_list_file, 'r') as f:
+                lines = f.readlines()
+                logging.info(f"First 3 lines of test ligand list:")
+                for i, line in enumerate(lines[:3], 1):
+                    logging.info(f"  {i}: {line.strip()}")
+            
+            return True
+        else:
+            logging.error("Test ligand list file creation failed")
+            return False
+            
+    except Exception as e:
+        logging.error(f"Error creating test ligand list file: {e}")
+        return False
+
+def test_single_ligand_docking(ligand_file, test_dir):
+    """
+    Test docking a single ligand to see if the issue is with individual files.
+    
+    Args:
+        ligand_file (str): Path to single ligand file to test
+        test_dir (str): Directory for test outputs
+        
+    Returns:
+        bool: True if test passes, False otherwise
+    """
+    logging.info(f"Testing single ligand docking: {os.path.basename(ligand_file)}")
+    
+    # Create single ligand list file
+    single_list_file = os.path.join(test_dir, "single_ligand_test.txt")
+    with open(single_list_file, 'w') as f:
+        f.write(f"{os.path.abspath(ligand_file)}\n")
+    
+    # Build minimal command
+    cmd = ["unidocktools", "mcdock"]
+    for flag, value in MCDOCK_FLAGS.items():
+        if flag == "--gen_conf":
+            if value is not None:
+                cmd.append(flag)
+        elif value is not None:
+            cmd.extend([flag, value])
+    cmd.extend(["--ligand_index", single_list_file])
+    
+    try:
+        logging.info(f"Running single ligand test command:")
+        logging.info(" ".join(cmd))
+        
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=3600)  # 1 hour timeout
+        logging.info(f"Single ligand test PASSED for {os.path.basename(ligand_file)}")
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Single ligand test FAILED for {os.path.basename(ligand_file)}")
+        if e.stderr:
+            logging.error(f"[stderr] {e.stderr}")
+        return False
+    except subprocess.TimeoutExpired:
+        logging.error(f"Single ligand test TIMEOUT for {os.path.basename(ligand_file)}")
+        return False
+
 def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
     """
-    Run UniDock mcdock on a single chunk of ligands.
+    Run UniDock mcdock on a single chunk of ligands with enhanced debugging.
     
     Args:
         chunk_ligands (list): List of ligand file paths for this chunk
@@ -163,11 +294,39 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
     else:
         logging.info(f"Starting chunk {chunk_num} (memory monitoring not available)")
     
+    # BUG TEST 1: Test file access
+    accessible_files, inaccessible_files = test_ligand_file_access(chunk_ligands)
+    if inaccessible_files:
+        logging.error(f"Found {len(inaccessible_files)} inaccessible files in chunk {chunk_num}")
+        for bad_file in inaccessible_files[:5]:
+            logging.error(f"  - {os.path.basename(bad_file)}")
+        if len(inaccessible_files) > 5:
+            logging.error(f"  ... and {len(inaccessible_files) - 5} more")
+        return False
+    
+    # BUG TEST 2: Test ligand list file creation
+    if not test_ligand_list_file_creation(chunk_ligands, OUTPUT_DIR):
+        logging.error(f"Ligand list file creation failed for chunk {chunk_num}")
+        return False
+    
+    # BUG TEST 3: Test single ligand if chunk is small
+    if len(chunk_ligands) <= 5:
+        logging.info(f"Testing single ligand from chunk {chunk_num}...")
+        test_success = test_single_ligand_docking(chunk_ligands[0], OUTPUT_DIR)
+        if not test_success:
+            logging.error(f"Single ligand test failed for chunk {chunk_num}")
+            return False
+    
     # Create chunk-specific ligand list file
     chunk_ligand_list = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_ligand_list.txt")
     with open(chunk_ligand_list, "w") as f:
         for ligand in chunk_ligands:
             f.write(f"{os.path.abspath(ligand)}\n")
+    
+    # BUG TEST 4: Verify the created file
+    if not os.path.exists(chunk_ligand_list) or os.path.getsize(chunk_ligand_list) == 0:
+        logging.error(f"Chunk ligand list file creation failed: {chunk_ligand_list}")
+        return False
     
     # Build command for this chunk
     cmd = ["unidocktools", "mcdock"]
@@ -206,6 +365,24 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
             logging.error(f"[stdout] {e.stdout}")
         if e.stderr:
             logging.error(f"[stderr] {e.stderr}")
+        
+        # BUG TEST 5: Enhanced error analysis
+        if "Bad input file" in str(e.stderr):
+            logging.error(f"BAD INPUT FILE ERROR detected in chunk {chunk_num}")
+            logging.error("This suggests a file format issue or path problem")
+            
+            # Try to identify the problematic file
+            error_lines = str(e.stderr).split('\n')
+            for line in error_lines:
+                if "Bad input file" in line:
+                    logging.error(f"Error line: {line}")
+                    # Extract filename if possible
+                    if "obabel_" in line and ".sdf" in line:
+                        parts = line.split('/')
+                        for part in parts:
+                            if part.endswith('.sdf'):
+                                logging.error(f"Problematic file appears to be: {part}")
+        
         return False
     except KeyboardInterrupt:
         logging.error(f"\nChunk {chunk_num} interrupted by user!")
@@ -224,6 +401,74 @@ def reset_progress():
         logging.info(f"No existing results found at {result_dir}")
         return False
 
+def run_diagnostic_tests():
+    """Run comprehensive diagnostic tests to identify issues."""
+    logging.info("=== RUNNING DIAGNOSTIC TESTS ===")
+    
+    # Test 1: Check if directories exist
+    logging.info("\n--- Test 1: Directory Access ---")
+    if not os.path.exists(RECEPTOR_FILE):
+        logging.error(f"❌ Receptor file not found: {RECEPTOR_FILE}")
+        return False
+    else:
+        logging.info(f"✅ Receptor file found: {RECEPTOR_FILE}")
+    
+    if not os.path.exists(LIGAND_DIR):
+        logging.error(f"❌ Ligand directory not found: {LIGAND_DIR}")
+        return False
+    else:
+        logging.info(f"✅ Ligand directory found: {LIGAND_DIR}")
+    
+    # Test 2: Find ligand files
+    logging.info("\n--- Test 2: Ligand File Discovery ---")
+    all_ligand_files = sorted([str(p) for p in Path(LIGAND_DIR).rglob("*.sdf")])
+    logging.info(f"Found {len(all_ligand_files)} SDF files")
+    
+    if len(all_ligand_files) == 0:
+        logging.error("❌ No SDF files found!")
+        return False
+    
+    # Test 3: File access test
+    logging.info("\n--- Test 3: File Access Test ---")
+    accessible_files, inaccessible_files = test_ligand_file_access(all_ligand_files[:100])  # Test first 100
+    
+    if inaccessible_files:
+        logging.error(f"❌ Found {len(inaccessible_files)} inaccessible files")
+        for bad_file in inaccessible_files[:5]:
+            logging.error(f"  - {os.path.basename(bad_file)}")
+    else:
+        logging.info("✅ All tested files are accessible")
+    
+    # Test 4: Ligand list file creation
+    logging.info("\n--- Test 4: Ligand List File Creation ---")
+    if test_ligand_list_file_creation(all_ligand_files[:10], OUTPUT_DIR):
+        logging.info("✅ Ligand list file creation test passed")
+    else:
+        logging.error("❌ Ligand list file creation test failed")
+    
+    # Test 5: Single ligand docking test
+    logging.info("\n--- Test 5: Single Ligand Docking Test ---")
+    if len(all_ligand_files) > 0:
+        test_ligand = all_ligand_files[0]
+        logging.info(f"Testing single ligand: {os.path.basename(test_ligand)}")
+        
+        if test_single_ligand_docking(test_ligand, OUTPUT_DIR):
+            logging.info("✅ Single ligand docking test passed")
+        else:
+            logging.error("❌ Single ligand docking test failed")
+            logging.error("This suggests the issue is with individual files, not chunking")
+    
+    # Test 6: Compare with mcdocklocal approach
+    logging.info("\n--- Test 6: Comparing with mcdocklocal approach ---")
+    logging.info("If single ligand test failed but mcdocklocal works, the issue is in:")
+    logging.info("  - File path handling")
+    logging.info("  - UniDock parameter differences")
+    logging.info("  - Working directory issues")
+    
+    logging.info("\n=== DIAGNOSTIC TESTS COMPLETE ===")
+    logging.info("Check the logs above for specific issues.")
+    return True
+
 
 def main():
     # Check for command line arguments
@@ -231,11 +476,15 @@ def main():
         if sys.argv[1] == "--reset":
             reset_progress()
             exit(0)
+        elif sys.argv[1] == "--test":
+            run_diagnostic_tests()
+            exit(0)
         elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
             print("UniDock mcdock with resume capability")
             print("Usage:")
-            print("  python mcdockv2.py          # Run/resume docking")
-            print("  python mcdockv2.py --reset  # Reset progress and start over")
+            print("  python mcdockv2_b2.py          # Run/resume docking")
+            print("  python mcdockv2_b2.py --reset  # Reset progress and start over")
+            print("  python mcdockv2_b2.py --test   # Run diagnostic tests")
             exit(0)
 
     # Validate input files/directories
