@@ -23,7 +23,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 1000  # Number of ligands per mcdock execution
+LIGANDS_PER_CHUNK = 100  # Reduced for debugging
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
@@ -280,21 +280,22 @@ def main():
         ligand_files = all_ligand_files
 
     # Validate ligand files to filter out corrupted ones
-    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
-    
-    if invalid_ligands:
-        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
-        for invalid_file in invalid_ligands[:10]:  # Show first 10
-            logging.warning(f"  - {os.path.basename(invalid_file)}")
-        if len(invalid_ligands) > 10:
-            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
-    
-    if not valid_ligands:
-        logging.error("No valid ligand files found after validation!")
-        exit(1)
-    
-    ligand_files = valid_ligands  # Use only valid files
-    logging.info(f"Proceeding with {len(ligand_files)} valid ligand files")
+    # TEMPORARILY DISABLED FOR DEBUGGING
+    # valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
+    # 
+    # if invalid_ligands:
+    #     logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
+    #     for invalid_file in invalid_ligands[:10]:  # Show first 10
+    #         logging.warning(f"  - {os.path.basename(invalid_file)}")
+    #     if len(invalid_ligands) > 10:
+    #         logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
+    # 
+    # if not valid_ligands:
+    #     logging.error("No valid ligand files found after validation!")
+    #     exit(1)
+    # 
+    # ligand_files = valid_ligands  # Use only valid files
+    logging.info(f"Proceeding with {len(ligand_files)} ligand files (validation disabled)")
 
     # Create chunks for processing
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)

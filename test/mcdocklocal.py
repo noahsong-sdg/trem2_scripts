@@ -30,7 +30,7 @@ MCDOCK_FLAGS = {
     "--size_y": str(SIZE_Y),
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
-    # "--savedir": os.path.join(OUTPUT_DIR, "MultiConfDock-Result"),
+    "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
     "--batch_size": "800", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
@@ -41,7 +41,7 @@ MCDOCK_FLAGS = {
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
-    "--max_num_confs_per_ligand": "50",
+    "--max_num_confs_per_ligand": "10",
     "--gen_conf": "1",  # Flag only, no value
 }
 
