@@ -153,12 +153,19 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
                     logging.error(f"No ligands remaining after removing failed ones")
                     break
             else:
-                # Couldn't identify specific failed ligands, log the error and stop
-                logging.error(f"Chunk {chunk_num} failed and couldn't identify specific failed ligands")
+                # Couldn't identify specific failed ligands, try a different approach
+                logging.warning(f"Chunk {chunk_num} attempt {attempt + 1}: Couldn't identify specific failed ligands")
+                logging.warning("This might be a different type of error. Logging details:")
                 if e.stderr:
-                    logging.error(f"STDERR: {e.stderr}")
+                    logging.warning(f"STDERR: {e.stderr}")
                 if e.stdout:
-                    logging.error(f"STDOUT: {e.stdout}")
+                    logging.warning(f"STDOUT: {e.stdout}")
+                
+                # If this is the last attempt, mark all remaining ligands as failed
+                if attempt == max_attempts - 1:
+                    logging.error(f"Marking all {len(remaining_ligands)} remaining ligands as failed")
+                    failed_ligands.extend(remaining_ligands)
+                    remaining_ligands = []
                 break
                 
         except subprocess.TimeoutExpired:
@@ -183,7 +190,13 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
         logging.info(f"Failed ligands saved to: {failed_file}")
     
     # Return True if at least some ligands were processed successfully
-    return len(successful_ligands) > 0
+    success = len(successful_ligands) > 0
+    if not success:
+        logging.error(f"Chunk {chunk_num}: All ligands failed processing")
+        logging.error(f"  Total ligands in chunk: {len(chunk_ligands)}")
+        logging.error(f"  Failed ligands: {len(failed_ligands)}")
+        logging.error(f"  Successful ligands: {len(successful_ligands)}")
+    return success
 
 def extract_failed_ligands_from_error(stderr, ligand_list):
     """Extract list of failed ligands from UniDock error message."""
@@ -358,14 +371,16 @@ def main():
                 continue
             
             # Run chunk with retry logic
-            if run_mcdock_chunk_with_retry(remaining, chunk_num, total_chunks):
+            chunk_success = run_mcdock_chunk_with_retry(remaining, chunk_num, total_chunks)
+            
+            if chunk_success:
                 successful_chunks += 1
                 current_completed = get_completed_ligands()
                 logging.info(f"Progress: {len(current_completed)}/{len(all_ligand_files)}")
             else:
                 failed_chunks += 1
-                logging.error(f"Chunk {chunk_num} failed - stopping")
-                break
+                logging.warning(f"Chunk {chunk_num} failed - continuing with remaining chunks")
+                # Don't break, continue to next chunk
                 
     except KeyboardInterrupt:
         logging.error("Interrupted by user")
@@ -382,13 +397,22 @@ def main():
     logging.info(f"Ligands: {total_completed}/{len(all_ligand_files)} completed")
     
     if failed_chunks > 0:
-        logging.error(f"Failed chunks: {failed_chunks}")
-        exit(1)
+        logging.warning(f"Failed chunks: {failed_chunks}")
+        logging.info("Check failed ligand files in output directory for details")
+        logging.info("You can re-run the script to retry failed chunks")
     elif total_completed == len(all_ligand_files):
         logging.info("All ligands completed successfully!")
     else:
         remaining = len(all_ligand_files) - total_completed
         logging.info(f"Remaining: {remaining}")
+        logging.info("Run the script again to resume from where it left off")
+    
+    # Don't exit with error code if some chunks failed but we processed successfully
+    if total_completed > 0:
+        logging.info("Script completed with partial success")
+    else:
+        logging.error("No ligands were processed successfully")
+        exit(1)
 
 if __name__ == "__main__":
     main() 
