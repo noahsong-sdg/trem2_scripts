@@ -84,63 +84,135 @@ def quick_file_test(ligand_files):
             pass
     return accessible
 
-def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
-    """Run UniDock on a chunk of ligands."""
+def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
+    """Run UniDock on a chunk of ligands, skipping failed individual ligands."""
     logging.info(f"Chunk {chunk_num}/{total_chunks}: {len(chunk_ligands)} ligands")
     
     # Quick file test
     accessible_files = quick_file_test(chunk_ligands)
     if len(accessible_files) != len(chunk_ligands):
-        logging.error(f"Chunk {chunk_num}: {len(chunk_ligands) - len(accessible_files)} inaccessible files")
+        logging.warning(f"Chunk {chunk_num}: {len(chunk_ligands) - len(accessible_files)} inaccessible files")
+        chunk_ligands = accessible_files  # Use only accessible files
+    
+    if not chunk_ligands:
+        logging.error(f"Chunk {chunk_num}: No accessible files")
         return False
     
-    # Create ligand list file
-    chunk_list = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_ligand_list.txt")
-    with open(chunk_list, "w") as f:
-        for ligand in chunk_ligands:
-            f.write(f"{os.path.abspath(ligand)}\n")
+    # Track failed ligands
+    failed_ligands = []
+    successful_ligands = []
+    remaining_ligands = chunk_ligands.copy()
     
-    # Build command
-    cmd = ["unidocktools", "mcdock"]
-    for flag, value in MCDOCK_FLAGS.items():
-        if flag == "--gen_conf":
-            cmd.append(flag)
-        elif value is not None:
-            cmd.extend([flag, value])
-    cmd.extend(["--ligand_index", chunk_list])
-    
-    try:
-        result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
-                               stdin=subprocess.DEVNULL)
-        logging.info(f"Chunk {chunk_num} completed")
-        os.remove(chunk_list)
-        return True
+    # Try processing the chunk multiple times, removing failed ligands each time
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        if not remaining_ligands:
+            break
+            
+        logging.info(f"Chunk {chunk_num} attempt {attempt + 1}: {len(remaining_ligands)} ligands")
         
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Chunk {chunk_num} failed: {e}")
-        if e.stderr:
-            logging.error(f"STDERR: {e.stderr}")
-        if e.stdout:
-            logging.error(f"STDOUT: {e.stdout}")
+        # Create ligand list file for remaining ligands
+        chunk_list = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_attempt_{attempt + 1}_ligand_list.txt")
+        with open(chunk_list, "w") as f:
+            for ligand in remaining_ligands:
+                f.write(f"{os.path.abspath(ligand)}\n")
         
-        if "Bad input file" in str(e.stderr):
-            logging.error("Bad input file error detected")
-            # Try to extract the problematic filename
-            error_lines = str(e.stderr).split('\n')
-            for line in error_lines:
-                if "Bad input file" in line and ".sdf" in line:
-                    logging.error(f"Problematic file: {line}")
-                    # Extract just the filename
-                    if "obabel_" in line:
-                        parts = line.split('/')
-                        for part in parts:
-                            if part.endswith('.sdf'):
-                                logging.error(f"Failing SDF file: {part}")
-                                break
-        return False
-    except subprocess.TimeoutExpired:
-        logging.error(f"Chunk {chunk_num} timed out")
-        return False
+        # Build command
+        cmd = ["unidocktools", "mcdock"]
+        for flag, value in MCDOCK_FLAGS.items():
+            if flag == "--gen_conf":
+                cmd.append(flag)
+            elif value is not None:
+                cmd.extend([flag, value])
+        cmd.extend(["--ligand_index", chunk_list])
+        
+        try:
+            result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
+                                   stdin=subprocess.DEVNULL)
+            logging.info(f"Chunk {chunk_num} attempt {attempt + 1} completed successfully")
+            successful_ligands.extend(remaining_ligands)
+            os.remove(chunk_list)
+            break
+            
+        except subprocess.CalledProcessError as e:
+            logging.warning(f"Chunk {chunk_num} attempt {attempt + 1} failed")
+            
+            # Extract failed ligands from error message
+            failed_in_attempt = extract_failed_ligands_from_error(e.stderr, remaining_ligands)
+            
+            if failed_in_attempt:
+                logging.warning(f"Identified {len(failed_in_attempt)} failed ligands in attempt {attempt + 1}")
+                failed_ligands.extend(failed_in_attempt)
+                
+                # Remove failed ligands from remaining list
+                remaining_ligands = [ligand for ligand in remaining_ligands if ligand not in failed_in_attempt]
+                
+                if remaining_ligands:
+                    logging.info(f"Retrying with {len(remaining_ligands)} remaining ligands")
+                else:
+                    logging.error(f"No ligands remaining after removing failed ones")
+                    break
+            else:
+                # Couldn't identify specific failed ligands, log the error and stop
+                logging.error(f"Chunk {chunk_num} failed and couldn't identify specific failed ligands")
+                if e.stderr:
+                    logging.error(f"STDERR: {e.stderr}")
+                if e.stdout:
+                    logging.error(f"STDOUT: {e.stdout}")
+                break
+                
+        except subprocess.TimeoutExpired:
+            logging.error(f"Chunk {chunk_num} attempt {attempt + 1} timed out")
+            break
+        finally:
+            # Clean up attempt file
+            if os.path.exists(chunk_list):
+                os.remove(chunk_list)
+    
+    # Log results
+    logging.info(f"Chunk {chunk_num} results:")
+    logging.info(f"  Successful: {len(successful_ligands)} ligands")
+    logging.info(f"  Failed: {len(failed_ligands)} ligands")
+    
+    # Save failed ligands to file
+    if failed_ligands:
+        failed_file = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_failed_ligands.txt")
+        with open(failed_file, "w") as f:
+            for ligand in failed_ligands:
+                f.write(f"{ligand}\n")
+        logging.info(f"Failed ligands saved to: {failed_file}")
+    
+    # Return True if at least some ligands were processed successfully
+    return len(successful_ligands) > 0
+
+def extract_failed_ligands_from_error(stderr, ligand_list):
+    """Extract list of failed ligands from UniDock error message."""
+    if not stderr:
+        return []
+    
+    failed_ligands = []
+    error_text = str(stderr)
+    
+    # Look for "Bad input file" errors
+    if "Bad input file" in error_text:
+        # Extract filenames from error messages
+        error_lines = error_text.split('\n')
+        for line in error_lines:
+            if "Bad input file" in line and ".sdf" in line:
+                # Try to extract the filename
+                if "obabel_" in line:
+                    parts = line.split('/')
+                    for part in parts:
+                        if part.endswith('.sdf'):
+                            # Find the corresponding ligand file path
+                            for ligand in ligand_list:
+                                if part in ligand:
+                                    failed_ligands.append(ligand)
+                                    logging.warning(f"Identified failed ligand: {os.path.basename(ligand)}")
+                                    break
+                            break
+    
+    return failed_ligands
 
 def reset_progress():
     """Reset progress by removing mcresult directory."""
@@ -285,8 +357,8 @@ def main():
                 successful_chunks += 1
                 continue
             
-            # Run chunk
-            if run_mcdock_chunk(remaining, chunk_num, total_chunks):
+            # Run chunk with retry logic
+            if run_mcdock_chunk_with_retry(remaining, chunk_num, total_chunks):
                 successful_chunks += 1
                 current_completed = get_completed_ligands()
                 logging.info(f"Progress: {len(current_completed)}/{len(all_ligand_files)}")
