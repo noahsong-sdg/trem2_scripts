@@ -111,7 +111,7 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
     
     try:
         result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
-                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                               stdin=subprocess.DEVNULL)
         logging.info(f"Chunk {chunk_num} completed")
         os.remove(chunk_list)
         return True
@@ -168,7 +168,7 @@ def run_diagnostic_tests():
         
         cmd = ["unidocktools", "mcdock", "--receptor", RECEPTOR_FILE, "--ligand_index", test_list]
         try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=3600)
+            subprocess.run(cmd, check=True, capture_output=True, timeout=3600, stdin=subprocess.DEVNULL)
             logging.info("Single ligand test: PASSED")
         except:
             logging.error("Single ligand test: FAILED")
