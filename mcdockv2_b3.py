@@ -23,7 +23,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 100  # Reduced for debugging
+LIGANDS_PER_CHUNK = 2000  # Reduced for debugging
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
