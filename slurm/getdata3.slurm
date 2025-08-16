@@ -3,12 +3,12 @@
 #SBATCH --qos=normal
 #SBATCH --partition=amilan
 #SBATCH --account=ucb-general
-#SBATCH --job-name=get_column_fourii
+#SBATCH --job-name=get_column_six
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --output=c4ii_%j.out
-#SBATCH --error=c4ii_%j.err
+#SBATCH --output=c6_%j.out
+#SBATCH --error=c6_%j.err
 
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=noso3320@colorado.edu
@@ -25,4 +25,4 @@ module load anaconda
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 
-python scripts/getdata_sdf.py
+python scripts/getdata3.py
