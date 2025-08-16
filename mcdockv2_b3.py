@@ -23,7 +23,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Chunk processing parameters (for cluster time limit resilience)
-LIGANDS_PER_CHUNK = 500  # Reduced from 5000 to reduce memory usage
+LIGANDS_PER_CHUNK = 100  # Reduced for debugging
 
 # Centralized UniDock mcdock flags (add/modify here)
 MCDOCK_FLAGS = {
@@ -37,17 +37,17 @@ MCDOCK_FLAGS = {
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "100", # Reduced from 1000 to prevent OOM kills
+    "--batch_size": "500", # 1200 caused broken pipe and ran out of memory
     "--scoring_function_rigid_docking": "vina",
-    "--exhaustiveness_rigid_docking": "8",
+    "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
-    "--topn_rigid_docking": "50",
+    "--topn_rigid_docking": "20",
     "--scoring_function_local_refine": "vina",
-    "--exhaustiveness_local_refine": "16",
+    "--exhaustiveness_local_refine": "64",
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
-    "--max_num_confs_per_ligand": "10",
+    "--max_num_confs_per_ligand": "20",
     "--gen_conf": "1",  # Flag only, no value
 }
 
@@ -162,35 +162,6 @@ def create_chunks(ligand_files, chunk_size):
     return chunks
 
 
-def get_memory_info():
-    """Get memory usage information using built-in Python modules."""
-    try:
-        with open('/proc/meminfo', 'r') as f:
-            lines = f.readlines()
-        
-        mem_info = {}
-        for line in lines:
-            if 'MemTotal:' in line:
-                mem_info['total'] = int(line.split()[1]) * 1024  # Convert KB to bytes
-            elif 'MemAvailable:' in line:
-                mem_info['available'] = int(line.split()[1]) * 1024
-            elif 'MemFree:' in line and 'available' not in mem_info:
-                mem_info['available'] = int(line.split()[1]) * 1024
-        
-        if 'total' in mem_info and 'available' in mem_info:
-            used = mem_info['total'] - mem_info['available']
-            percent = (used / mem_info['total']) * 100
-            return {
-                'percent': percent,
-                'used_gb': used / (1024**3),
-                'total_gb': mem_info['total'] / (1024**3)
-            }
-    except (FileNotFoundError, IndexError, ValueError):
-        pass
-    
-    # Fallback for non-Linux systems or if /proc/meminfo is not available
-    return None
-
 def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
     """
     Run UniDock mcdock on a single chunk of ligands.
@@ -204,14 +175,7 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
         bool: True if chunk completed successfully, False otherwise
     """
     logging.info(f"\n=== Processing Chunk {chunk_num}/{total_chunks} ({len(chunk_ligands)} ligands) ===")
-    logging.info(f"UniDock will process these in batches of 500 ligands internally")
-    
-    # Log memory usage before starting
-    memory_info = get_memory_info()
-    if memory_info:
-        logging.info(f"Memory usage before chunk {chunk_num}: {memory_info['percent']:.1f}% ({memory_info['used_gb']:.1f}GB / {memory_info['total_gb']:.1f}GB)")
-    else:
-        logging.info(f"Starting chunk {chunk_num} (memory monitoring not available)")
+    logging.info(f"UniDock will process these in batches of 800 ligands internally")
     
     # Create chunk-specific ligand list file
     chunk_ligand_list = os.path.join(OUTPUT_DIR, f"chunk_{chunk_num}_ligand_list.txt")
@@ -230,26 +194,18 @@ def run_mcdock_chunk(chunk_ligands, chunk_num, total_chunks):
     cmd.extend(["--ligand_index", chunk_ligand_list])
     
     logging.info(f"Running chunk {chunk_num} command:")
+    
     logging.info(" ".join(cmd))
     
     try:
-        # Run with timeout
-        result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000)  # 10 hour timeout
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True)
         logging.info(f"Chunk {chunk_num} completed successfully")
         logging.info(result.stdout)
-        
-        # Log memory usage after completion
-        memory_info = get_memory_info()
-        if memory_info:
-            logging.info(f"Memory usage after chunk {chunk_num}: {memory_info['percent']:.1f}% ({memory_info['used_gb']:.1f}GB / {memory_info['total_gb']:.1f}GB)")
         
         # Clean up chunk ligand list file
         os.remove(chunk_ligand_list)
         return True
         
-    except subprocess.TimeoutExpired:
-        logging.error(f"Chunk {chunk_num} timed out after 10 hours")
-        return False
     except subprocess.CalledProcessError as e:
         logging.error(f"Error in chunk {chunk_num}: {e}")
         if e.stdout:
@@ -324,21 +280,22 @@ def main():
         ligand_files = all_ligand_files
 
     # Validate ligand files to filter out corrupted ones
-    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
-    
-    if invalid_ligands:
-        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
-        for invalid_file in invalid_ligands[:10]:  # Show first 10
-            logging.warning(f"  - {os.path.basename(invalid_file)}")
-        if len(invalid_ligands) > 10:
-            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
-    
-    if not valid_ligands:
-        logging.error("No valid ligand files found after validation!")
-        exit(1)
-    
-    ligand_files = valid_ligands  # Use only valid files
-    logging.info(f"Proceeding with {len(ligand_files)} valid ligand files")
+    # TEMPORARILY DISABLED FOR DEBUGGING
+    # valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
+    # 
+    # if invalid_ligands:
+    #     logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
+    #     for invalid_file in invalid_ligands[:10]:  # Show first 10
+    #         logging.warning(f"  - {os.path.basename(invalid_file)}")
+    #     if len(invalid_ligands) > 10:
+    #         logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
+    # 
+    # if not valid_ligands:
+    #     logging.error("No valid ligand files found after validation!")
+    #     exit(1)
+    # 
+    # ligand_files = valid_ligands  # Use only valid files
+    logging.info(f"Proceeding with {len(ligand_files)} ligand files (validation disabled)")
 
     # Create chunks for processing
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)
@@ -348,9 +305,7 @@ def main():
     logging.info(f"  Total ligands to process: {len(ligand_files)}")
     logging.info(f"  Ligands per chunk: {LIGANDS_PER_CHUNK}")
     logging.info(f"  Total chunks: {total_chunks}")
-    logging.info(f"  UniDock batch size: 500 ligands (internal)")
-    logging.info(f"  Memory monitoring: Enabled")
-    logging.info(f"  Chunk timeout: 10 hours")
+    logging.info(f"  UniDock batch size: 800 ligands (internal)")
     
     # Process chunks sequentially
     successful_chunks = 0
