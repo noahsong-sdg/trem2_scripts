@@ -8,7 +8,7 @@ mamba create -n unidock_env python=3.10 requests unidock -c conda-forge'
 
 
 
-ctrl f column_two
+ctrl f column_three
 repalce
 """
 import requests
@@ -439,8 +439,8 @@ def split_sdf_files(input_dir, output_dir, max_workers=4):
 if __name__ == "__main__":
     
     try:
-        RAW_LIGANDS_DIR = os.path.join(SCRIPT_DIR, "../data/column_two/ligands_raw")
-        URI_FILE = os.path.join(SCRIPT_DIR, "../data/column_two.uri") # Using the SDF.gz file URLs
+        RAW_LIGANDS_DIR = os.path.join(SCRIPT_DIR, "../data/column_three/ligands_raw")
+        URI_FILE = os.path.join(SCRIPT_DIR, "../data/column_three.uri") # Using the SDF.gz file URLs
         
         # Configuration for parallel processing
         DOWNLOAD_WORKERS = 8  # Number of parallel download threads
@@ -466,7 +466,7 @@ if __name__ == "__main__":
         print(f"📁 Files saved to: {RAW_LIGANDS_DIR}")
         
         # Extract SDF files with parallel processing
-        sdf_dir = os.path.join(SCRIPT_DIR, "../data/column_two/ligands_sdf")
+        sdf_dir = os.path.join(SCRIPT_DIR, "../data/column_three/ligands_sdf")
         successful_extractions, failed_extractions = extract_sdf_files(
             RAW_LIGANDS_DIR, sdf_dir, max_workers=EXTRACTION_WORKERS)
         print(f"\n=== EXTRACTION SUMMARY ===")
@@ -475,7 +475,7 @@ if __name__ == "__main__":
         print(f"📁 SDF files ready for splitting: {sdf_dir}")
         
         # Check if data has already been processed
-        split_dir = os.path.join(SCRIPT_DIR, "../data/column_two/ligands_sdf_split")
+        split_dir = os.path.join(SCRIPT_DIR, "../data/column_three/ligands_sdf_split")
         
         if os.path.exists(split_dir) and os.listdir(split_dir):
             # Count existing processed molecules
