@@ -29,7 +29,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Processing parameters
-LIGANDS_PER_CHUNK = 1000
+LIGANDS_PER_CHUNK = 100  # Reduced from 1000 for testing
 
 # UniDock flags
 MCDOCK_FLAGS = {
@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--center_x": str(CENTER_X), "--center_y": str(CENTER_Y), "--center_z": str(CENTER_Z),
     "--size_x": str(SIZE_X), "--size_y": str(SIZE_Y), "--size_z": str(SIZE_Z),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "250",
+    "--batch_size": "50",  # Reduced from 250 for testing
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -127,15 +127,20 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
         cmd.extend(["--ligand_index", chunk_list])
         
         try:
+            logging.info(f"Running command: {' '.join(cmd)}")
             result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
                                    stdin=subprocess.DEVNULL)
             logging.info(f"Chunk {chunk_num} attempt {attempt + 1} completed successfully")
+            logging.info(f"STDOUT: {result.stdout[:500]}...")  # Log first 500 chars of output
             successful_ligands.extend(remaining_ligands)
             os.remove(chunk_list)
             break
             
         except subprocess.CalledProcessError as e:
             logging.warning(f"Chunk {chunk_num} attempt {attempt + 1} failed")
+            logging.warning(f"Return code: {e.returncode}")
+            logging.warning(f"STDERR: {e.stderr[:1000]}...")  # Log first 1000 chars of error
+            logging.warning(f"STDOUT: {e.stdout[:500]}...")   # Log first 500 chars of output
             
             # Extract failed ligands from error message
             failed_in_attempt = extract_failed_ligands_from_error(e.stderr, remaining_ligands)
