@@ -71,6 +71,39 @@ def create_chunks(ligand_files, chunk_size):
     """Split files into chunks."""
     return [ligand_files[i:i + chunk_size] for i in range(0, len(ligand_files), chunk_size)]
 
+def validate_sdf_file(sdf_path):
+    """Validate an SDF file using Open Babel to check if it's readable."""
+    try:
+        result = subprocess.run(
+            ['obabel', sdf_path, '-osdf', '-O', '/dev/null'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+        return False
+
+def filter_valid_ligands(ligand_files):
+    """Filter out invalid/corrupted SDF files before processing."""
+    valid_files = []
+    invalid_files = []
+    
+    logging.info(f"Validating {len(ligand_files)} ligand files...")
+    
+    for i, ligand_file in enumerate(ligand_files, 1):
+        if i % 100 == 0:
+            logging.info(f"Validated {i}/{len(ligand_files)} files...")
+        
+        if validate_sdf_file(ligand_file):
+            valid_files.append(ligand_file)
+        else:
+            invalid_files.append(ligand_file)
+            logging.warning(f"Invalid SDF file detected: {os.path.basename(ligand_file)}")
+    
+    logging.info(f"Validation complete: {len(valid_files)} valid, {len(invalid_files)} invalid")
+    return valid_files, invalid_files
+
 def quick_file_test(ligand_files):
     """Quick test if files are accessible."""
     accessible = []
@@ -349,6 +382,24 @@ def main():
             exit(0)
     else:
         ligand_files = all_ligand_files
+
+    # Validate ligand files to filter out corrupted ones
+    logging.info("Validating SDF files to filter out corrupted ones...")
+    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
+    
+    if invalid_ligands:
+        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
+        for invalid_file in invalid_ligands[:10]:  # Show first 10
+            logging.warning(f"  - {os.path.basename(invalid_file)}")
+        if len(invalid_ligands) > 10:
+            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
+    
+    if not valid_ligands:
+        logging.error("No valid ligand files found after validation!")
+        exit(1)
+    
+    ligand_files = valid_ligands  # Use only valid files
+    logging.info(f"Proceeding with {len(ligand_files)} validated ligand files")
 
     # Create chunks
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)
