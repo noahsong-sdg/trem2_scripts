@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--size_z": str(SIZE_Z),
     # "--workdir": os.path.join(OUTPUT_DIR, "MultiConfDock"),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "500", # 1200 caused broken pipe and ran out of memory
+    "--batch_size": "50", # Reduced from 500 for testing
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -280,22 +280,22 @@ def main():
         ligand_files = all_ligand_files
 
     # Validate ligand files to filter out corrupted ones
-    # TEMPORARILY DISABLED FOR DEBUGGING
-    # valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
-    # 
-    # if invalid_ligands:
-    #     logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
-    #     for invalid_file in invalid_ligands[:10]:  # Show first 10
-    #         logging.warning(f"  - {os.path.basename(invalid_file)}")
-    #     if len(invalid_ligands) > 10:
-    #         logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
-    # 
-    # if not valid_ligands:
-    #     logging.error("No valid ligand files found after validation!")
-    #     exit(1)
-    # 
-    # ligand_files = valid_ligands  # Use only valid files
-    logging.info(f"Proceeding with {len(ligand_files)} ligand files (validation disabled)")
+    logging.info("Validating SDF files to filter out corrupted ones...")
+    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
+    
+    if invalid_ligands:
+        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
+        for invalid_file in invalid_ligands[:10]:  # Show first 10
+            logging.warning(f"  - {os.path.basename(invalid_file)}")
+        if len(invalid_ligands) > 10:
+            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
+    
+    if not valid_ligands:
+        logging.error("No valid ligand files found after validation!")
+        exit(1)
+    
+    ligand_files = valid_ligands  # Use only valid files
+    logging.info(f"Proceeding with {len(ligand_files)} validated ligand files")
 
     # Create chunks for processing
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)
