@@ -4,6 +4,8 @@ Minimal UniDock docking script for all ligands in a directory.
 - Centralizes all CLI flags for easy modification.
 - Supports both SDF and PDBQT ligands (no SDF-only enforcement).
 - No batching, no SLURM, no tranche logic.
+
+keep in test
 """
 import os
 import subprocess
@@ -12,8 +14,8 @@ from pathlib import Path
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RECEPTOR_FILE = os.path.join(SCRIPT_DIR, "../../data/receptor/cluster1_fixed.pdb")
-LIGAND_DIR = os.path.join(SCRIPT_DIR, "../../data/sdftest2/ligands_sdf_split/")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../../results/mcdock_local_test/")
+LIGAND_DIR = os.path.join(SCRIPT_DIR, "../../data/sdftestlocal/ligands_sdf_split/")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../../results/sdftestlocal/")
 
 # Box parameters (same as original script)
 CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
@@ -37,7 +39,7 @@ MCDOCK_FLAGS = {
     "--num_modes_rigid_docking": "3",
     "--topn_rigid_docking": "20",
     "--scoring_function_local_refine": "vina",
-    "--exhaustiveness_local_refine": "64",
+    "--exhaustiveness_local_refine": "32",
     "--num_modes_local_refine": "1",
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",

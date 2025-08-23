@@ -390,8 +390,8 @@ def split_sdf_files(input_dir, output_dir, max_workers=4):
 if __name__ == "__main__":
     
     try:
-        RAW_LIGANDS_DIR = os.path.join(SCRIPT_DIR, "../data/sdftest2/ligands_raw")
-        URI_FILE = os.path.join(SCRIPT_DIR, "../data/sdftest2.uri") # Using the SDF.gz file URLs
+        RAW_LIGANDS_DIR = os.path.join(SCRIPT_DIR, "../data/sdftestlocal/ligands_raw")
+        URI_FILE = os.path.join(SCRIPT_DIR, "../data/sdftestlocal.uri") # Using the SDF.gz file URLs
         
         # Configuration for parallel processing
         DOWNLOAD_WORKERS = 8  # Number of parallel download threads
@@ -417,7 +417,7 @@ if __name__ == "__main__":
         print(f"📁 Files saved to: {RAW_LIGANDS_DIR}")
         
         # Extract SDF files with parallel processing
-        sdf_dir = os.path.join(SCRIPT_DIR, "../data/sdftest2/ligands_sdf")
+        sdf_dir = os.path.join(SCRIPT_DIR, "../data/sdftestlocal/ligands_sdf")
         successful_extractions, failed_extractions = extract_sdf_files(
             RAW_LIGANDS_DIR, sdf_dir, max_workers=EXTRACTION_WORKERS)
         print(f"\n=== EXTRACTION SUMMARY ===")
@@ -426,7 +426,7 @@ if __name__ == "__main__":
         print(f"📁 SDF files ready for splitting: {sdf_dir}")
         
         # Check if data has already been processed
-        split_dir = os.path.join(SCRIPT_DIR, "../data/sdftest2/ligands_sdf_split")
+        split_dir = os.path.join(SCRIPT_DIR, "../data/sdftestlocal/ligands_sdf_split")
         
         if os.path.exists(split_dir) and os.listdir(split_dir):
             # Count existing processed molecules
