@@ -29,7 +29,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Processing parameters
-LIGANDS_PER_CHUNK = 500
+LIGANDS_PER_CHUNK = 500  # Back to original size
 
 # UniDock flags
 MCDOCK_FLAGS = {
@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--center_x": str(CENTER_X), "--center_y": str(CENTER_Y), "--center_z": str(CENTER_Z),
     "--size_x": str(SIZE_X), "--size_y": str(SIZE_Y), "--size_z": str(SIZE_Z),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "250",
+    "--batch_size": "250",  # Back to original size
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -118,7 +118,7 @@ def quick_file_test(ligand_files):
     return accessible
 
 def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
-    """Run UniDock on a chunk of ligands, skipping failed individual ligands."""
+    """Run UniDock on a chunk of ligands, allowing up to 10% failures before giving up."""
     logging.info(f"Chunk {chunk_num}/{total_chunks}: {len(chunk_ligands)} ligands")
     
     # Quick file test
@@ -130,6 +130,10 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
     if not chunk_ligands:
         logging.error(f"Chunk {chunk_num}: No accessible files")
         return False
+    
+    # Calculate failure tolerance (10% of original chunk size)
+    max_failures_allowed = max(1, int(len(chunk_ligands) * 0.10))  # At least 1, up to 10%
+    logging.info(f"Chunk {chunk_num}: Will allow up to {max_failures_allowed} failures before giving up")
     
     # Track failed ligands
     failed_ligands = []
@@ -149,7 +153,7 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
         with open(chunk_list, "w") as f:
             for ligand in remaining_ligands:
                 f.write(f"{os.path.abspath(ligand)}\n")
-        
+    
         # Build command
         cmd = ["unidocktools", "mcdock"]
         for flag, value in MCDOCK_FLAGS.items():
@@ -177,11 +181,21 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
                 logging.warning(f"Identified {len(failed_in_attempt)} failed ligands in attempt {attempt + 1}")
                 failed_ligands.extend(failed_in_attempt)
                 
+                # Check if we've exceeded the failure tolerance
+                if len(failed_ligands) > max_failures_allowed:
+                    logging.error(f"Chunk {chunk_num}: Exceeded failure tolerance ({len(failed_ligands)} > {max_failures_allowed})")
+                    logging.error("Giving up on this chunk due to too many failures")
+                    # Mark remaining ligands as failed since we're giving up
+                    failed_ligands.extend(remaining_ligands)
+                    remaining_ligands = []
+                    break
+                
                 # Remove failed ligands from remaining list
                 remaining_ligands = [ligand for ligand in remaining_ligands if ligand not in failed_in_attempt]
                 
                 if remaining_ligands:
                     logging.info(f"Retrying with {len(remaining_ligands)} remaining ligands")
+                    logging.info(f"Total failures so far: {len(failed_ligands)}/{max_failures_allowed}")
                 else:
                     logging.error(f"No ligands remaining after removing failed ones")
                     break
@@ -213,6 +227,7 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
     logging.info(f"Chunk {chunk_num} results:")
     logging.info(f"  Successful: {len(successful_ligands)} ligands")
     logging.info(f"  Failed: {len(failed_ligands)} ligands")
+    logging.info(f"  Failure rate: {len(failed_ligands)/len(chunk_ligands)*100:.1f}%")
     
     # Save failed ligands to file
     if failed_ligands:
