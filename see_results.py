@@ -4,8 +4,9 @@ import glob
 import re
 
 # --- Configuration ---
-DOCKING_OUTPUT_DIR = "../results/c1_outputs/mcresult/"
-ANALYSIS_RESULTS_FILE = "../results/mcdock_c1p1_summary.csv"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DOCKING_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c1_outputs/mcresult/")
+ANALYSIS_RESULTS_FILE = os.path.join(SCRIPT_DIR, "../results/mcdock_c1p1_summary.csv")
 
 def parse_unidock_sdf(filepath):
     """
