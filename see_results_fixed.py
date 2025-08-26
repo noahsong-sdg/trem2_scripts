@@ -5,10 +5,10 @@ import re
 
 # --- Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DOCKING_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c1_outputs/mcresult/")
+DOCKING_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c1_outputs/mcresult")
 ANALYSIS_RESULTS_FILE = os.path.join(SCRIPT_DIR, "../results/mcdock_c1p1_summary.csv")
 
-def parse_unidock_sdf(filepath):
+def parse_docking_sdf(filepath):
     """
     Parses a docking output SDF file to extract docking scores.
     
@@ -58,6 +58,7 @@ def parse_unidock_sdf(filepath):
 
 def main():
     print("--- Analyzing Docking Results ---")
+    print(f"Searching in: {DOCKING_OUTPUT_DIR}")
     
     all_results = []
     
@@ -72,9 +73,49 @@ def main():
     
     print(f"Found {len(sdf_files)} SDF files to analyze.")
     
-    for sdf_file in sdf_files:
-        print(f"Processing: {sdf_file}")
-        file_results = parse_unidock_sdf(sdf_file)
+    # Process first few files to test
+    test_files = sdf_files[:5]
+    print(f"Testing with first {len(test_files)} files...")
+    
+    for sdf_file in test_files:
+        print(f"Processing: {os.path.basename(sdf_file)}")
+        file_results = parse_docking_sdf(sdf_file)
+        if file_results:
+            print(f"  Found {len(file_results)} conformations")
+            all_results.extend(file_results)
+        else:
+            print(f"  No results found")
+    
+    if not all_results:
+        print("No results were processed from test files. Exiting.")
+        print("Let's examine the first file structure:")
+        
+        if sdf_files:
+            first_file = sdf_files[0]
+            print(f"\nExamining: {first_file}")
+            try:
+                with open(first_file, 'r') as f:
+                    content = f.read()
+                    # Show the first 500 characters
+                    print("First 500 characters:")
+                    print(content[:500])
+                    print("\n" + "="*50)
+                    # Look for docking_score patterns
+                    score_matches = re.findall(r'>\s*<docking_score>.*?\n([-\d.]+)', content, re.DOTALL)
+                    print(f"Found {len(score_matches)} docking_score entries")
+                    if score_matches:
+                        print("Sample scores:", score_matches[:5])
+            except Exception as e:
+                print(f"Error reading file: {e}")
+        exit()
+    
+    # If test was successful, process all files
+    print(f"\nTest successful! Processing all {len(sdf_files)} files...")
+    
+    for i, sdf_file in enumerate(sdf_files):
+        if i % 1000 == 0:
+            print(f"Progress: {i}/{len(sdf_files)} files processed")
+        file_results = parse_docking_sdf(sdf_file)
         all_results.extend(file_results)
     
     if not all_results:
