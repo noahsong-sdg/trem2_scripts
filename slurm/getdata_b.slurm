@@ -25,4 +25,4 @@ conda activate dock_env
 
 python scripts/getdatab.py # c2
 python scripts/getdatab2.py # c3
-# python scripts/getdata3.py # c6
+python scripts/getdata3.py # c1
