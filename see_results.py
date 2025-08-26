@@ -4,8 +4,8 @@ import glob
 import re
 
 # --- Configuration ---
-DOCKING_OUTPUT_DIR = "../results/mcdock_outputs_test/MultiConfDock-Result/"
-ANALYSIS_RESULTS_FILE = "../results/unidock_summary.csv"
+DOCKING_OUTPUT_DIR = "../results/c1_outputs/mcresult/"
+ANALYSIS_RESULTS_FILE = "../results/mcdock_c1p1_summary.csv"
 
 def parse_unidock_sdf(filepath):
     """
