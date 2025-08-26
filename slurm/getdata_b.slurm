@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --time=24:00:00
 #SBATCH --qos=preemptable
-#SBATCH --job-name=get_column_two
+#SBATCH --job-name=get_data_b
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --output=c2_%j.out
-#SBATCH --error=c2_%j.err
+#SBATCH --output=datab_%j.out
+#SBATCH --error=datab_%j.err
 
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=noso3320@colorado.edu
