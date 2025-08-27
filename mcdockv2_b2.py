@@ -29,7 +29,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Processing parameters
-LIGANDS_PER_CHUNK = 100  
+LIGANDS_PER_CHUNK = 250  
 
 # UniDock flags
 MCDOCK_FLAGS = {
@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--center_x": str(CENTER_X), "--center_y": str(CENTER_Y), "--center_z": str(CENTER_Z),
     "--size_x": str(SIZE_X), "--size_y": str(SIZE_Y), "--size_z": str(SIZE_Z),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "50", 
+    "--batch_size": "125", 
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
