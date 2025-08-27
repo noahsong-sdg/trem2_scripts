@@ -29,7 +29,7 @@ CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
 SIZE_X, SIZE_Y, SIZE_Z = 22.5, 22.5, 22.5
 
 # Processing parameters
-LIGANDS_PER_CHUNK = 500  
+LIGANDS_PER_CHUNK = 250  
 
 # UniDock flags
 MCDOCK_FLAGS = {
@@ -37,7 +37,7 @@ MCDOCK_FLAGS = {
     "--center_x": str(CENTER_X), "--center_y": str(CENTER_Y), "--center_z": str(CENTER_Z),
     "--size_x": str(SIZE_X), "--size_y": str(SIZE_Y), "--size_z": str(SIZE_Z),
     "--savedir": os.path.join(OUTPUT_DIR, "mcresult"),
-    "--batch_size": "250",  
+    "--batch_size": "125", 
     "--scoring_function_rigid_docking": "vina",
     "--exhaustiveness_rigid_docking": "32",
     "--num_modes_rigid_docking": "3",
@@ -71,38 +71,7 @@ def create_chunks(ligand_files, chunk_size):
     """Split files into chunks."""
     return [ligand_files[i:i + chunk_size] for i in range(0, len(ligand_files), chunk_size)]
 
-def validate_sdf_file(sdf_path):
-    """Validate an SDF file using Open Babel to check if it's readable."""
-    try:
-        result = subprocess.run(
-            ['obabel', sdf_path, '-osdf', '-O', '/dev/null'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
-        return False
 
-def filter_valid_ligands(ligand_files):
-    """Filter out invalid/corrupted SDF files before processing."""
-    valid_files = []
-    invalid_files = []
-    
-    logging.info(f"Validating {len(ligand_files)} ligand files...")
-    
-    for i, ligand_file in enumerate(ligand_files, 1):
-        if i % 100 == 0:
-            logging.info(f"Validated {i}/{len(ligand_files)} files...")
-        
-        if validate_sdf_file(ligand_file):
-            valid_files.append(ligand_file)
-        else:
-            invalid_files.append(ligand_file)
-            logging.warning(f"Invalid SDF file detected: {os.path.basename(ligand_file)}")
-    
-    logging.info(f"Validation complete: {len(valid_files)} valid, {len(invalid_files)} invalid")
-    return valid_files, invalid_files
 
 def quick_file_test(ligand_files):
     """Quick test if files are accessible."""
@@ -162,15 +131,20 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
         cmd.extend(["--ligand_index", chunk_list])
         
         try:
+            logging.info(f"Running command: {' '.join(cmd)}")
             result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
                                    stdin=subprocess.DEVNULL)
             logging.info(f"Chunk {chunk_num} attempt {attempt + 1} completed successfully")
+            logging.info(f"STDOUT: {result.stdout[:500]}...")  # Log first 500 chars of output
             successful_ligands.extend(remaining_ligands)
             os.remove(chunk_list)
             break
             
         except subprocess.CalledProcessError as e:
             logging.warning(f"Chunk {chunk_num} attempt {attempt + 1} failed")
+            logging.warning(f"Return code: {e.returncode}")
+            logging.warning(f"STDERR: {e.stderr[:1000]}...")  # Log first 1000 chars of error
+            logging.warning(f"STDOUT: {e.stdout[:500]}...")   # Log first 500 chars of output
             
             # Extract failed ligands from error message
             failed_in_attempt = extract_failed_ligands_from_error(e.stderr, remaining_ligands)
@@ -383,23 +357,7 @@ def main():
     else:
         ligand_files = all_ligand_files
 
-    # Validate ligand files to filter out corrupted ones
-    logging.info("Validating SDF files to filter out corrupted ones...")
-    valid_ligands, invalid_ligands = filter_valid_ligands(ligand_files)
-    
-    if invalid_ligands:
-        logging.warning(f"Found {len(invalid_ligands)} invalid SDF files that will be skipped:")
-        for invalid_file in invalid_ligands[:10]:  # Show first 10
-            logging.warning(f"  - {os.path.basename(invalid_file)}")
-        if len(invalid_ligands) > 10:
-            logging.warning(f"  ... and {len(invalid_ligands) - 10} more")
-    
-    if not valid_ligands:
-        logging.error("No valid ligand files found after validation!")
-        exit(1)
-    
-    ligand_files = valid_ligands  # Use only valid files
-    logging.info(f"Proceeding with {len(ligand_files)} validated ligand files")
+
 
     # Create chunks
     chunks = create_chunks(ligand_files, LIGANDS_PER_CHUNK)
