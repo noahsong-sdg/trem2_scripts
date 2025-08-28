@@ -16,9 +16,13 @@ import os
 import gzip
 import shutil
 import time
+import logging
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # Get the absolute path of the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +51,7 @@ def download_zinc_subset(url, output_dir, filename=None):
 
     # Existence check: skip if file exists and is non-empty
     if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
-        print(f"✓ Skipping already downloaded: {filename}")
+        logging.info(f"✓ Skipping already downloaded: {filename}")
         return filepath
 
     try:
@@ -68,19 +72,19 @@ def download_zinc_subset(url, output_dir, filename=None):
         # Thread-safe progress update
         with download_lock:
             progress_counter['completed'] += 1
-            print(f"✓ Downloaded ({progress_counter['completed']}) {filename} ({file_size:,} bytes)")
+            logging.info(f"✓ Downloaded ({progress_counter['completed']}) {filename} ({file_size:,} bytes)")
         
         return filepath
         
     except requests.exceptions.RequestException as e:
         with download_lock:
             progress_counter['failed'] += 1
-            print(f"✗ Failed ({progress_counter['failed']}) {filename}: {e}")
+            logging.error(f"✗ Failed ({progress_counter['failed']}) {filename}: {e}")
         return None
     except Exception as e:
         with download_lock:
             progress_counter['failed'] += 1
-            print(f"✗ Error ({progress_counter['failed']}) {filename}: {e}")
+            logging.error(f"✗ Error ({progress_counter['failed']}) {filename}: {e}")
         return None
 
 def download_single_file(args):
@@ -100,7 +104,7 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
         max_retries (int): Maximum number of retry attempts for failed downloads.
     """
     if not os.path.exists(uri_file_path):
-        print(f"Error: URI file not found at {uri_file_path}")
+        logging.error(f"Error: URI file not found at {uri_file_path}")
         return 0, 0
 
     # Read all URLs
@@ -112,11 +116,11 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
                 urls.append(url)
     
     if not urls:
-        print("No valid URLs found in URI file")
+        logging.error("No valid URLs found in URI file")
         return 0, 0
     
-    print(f"Starting parallel download of {len(urls)} SDF files using {max_workers} workers...")
-    print(f"Will retry failed downloads up to {max_retries} times")
+    logging.info(f"Starting parallel download of {len(urls)} SDF files using {max_workers} workers...")
+    logging.info(f"Will retry failed downloads up to {max_retries} times")
     
     # Reset progress counters
     with download_lock:
@@ -139,13 +143,13 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
     # Execute downloads with retries
     for attempt in range(1, max_retries + 1):
         if attempt == 1:
-            print(f"\n=== ATTEMPT {attempt}: Initial download ===")
+            logging.info(f"\n=== ATTEMPT {attempt}: Initial download ===")
             current_args = download_args
         else:
             if not failed_downloads:
-                print(f"\n=== All downloads successful after {attempt-1} attempts ===")
+                logging.info(f"\n=== All downloads successful after {attempt-1} attempts ===")
                 break
-            print(f"\n=== ATTEMPT {attempt}: Retrying {len(failed_downloads)} failed downloads ===")
+            logging.info(f"\n=== ATTEMPT {attempt}: Retrying {len(failed_downloads)} failed downloads ===")
             current_args = failed_downloads
             failed_downloads = []  # Reset for next attempt
         
@@ -177,24 +181,24 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
                 except Exception as e:
                     attempt_failed += 1
                     failed_downloads.append(args)  # Add to retry list
-                    print(f"✗ Exception downloading {url}: {e}")
+                    logging.error(f"✗ Exception downloading {url}: {e}")
         
         total_downloaded += attempt_downloaded
         total_failed = len(failed_downloads)
         
-        print(f"Attempt {attempt} results: {attempt_downloaded} successful, {attempt_failed} failed")
+        logging.info(f"Attempt {attempt} results: {attempt_downloaded} successful, {attempt_failed} failed")
         
         if attempt < max_retries and failed_downloads:
-            print(f"Retrying {len(failed_downloads)} failed downloads in next attempt...")
-            print(f"Waiting 60 minutes before retry attempt {attempt + 1}...")
+            logging.info(f"Retrying {len(failed_downloads)} failed downloads in next attempt...")
+            logging.info(f"Waiting 60 minutes before retry attempt {attempt + 1}...")
             time.sleep(3600)  # 60 minutes = 600 seconds
         elif failed_downloads:
-            print(f"Reached maximum retries ({max_retries}). {len(failed_downloads)} downloads still failed.")
+            logging.warning(f"Reached maximum retries ({max_retries}). {len(failed_downloads)} downloads still failed.")
     
-    print(f"\n=== FINAL DOWNLOAD SUMMARY ===")
-    print(f"✓ Total successful downloads: {total_downloaded}")
-    print(f"✗ Total failed downloads: {total_failed}")
-    print(f"📊 Success rate: {total_downloaded/(total_downloaded+total_failed)*100:.1f}%")
+    logging.info(f"\n=== FINAL DOWNLOAD SUMMARY ===")
+    logging.info(f"✓ Total successful downloads: {total_downloaded}")
+    logging.info(f"✗ Total failed downloads: {total_failed}")
+    logging.info(f"📊 Success rate: {total_downloaded/(total_downloaded+total_failed)*100:.1f}%")
     
     return total_downloaded, total_failed
 
@@ -217,10 +221,10 @@ def extract_sdf_files(raw_dir, output_dir, max_workers=4):
     gz_files = list(Path(raw_dir).glob("*.sdf.gz"))
     
     if not gz_files:
-        print(f"No .sdf.gz files found in {raw_dir}")
+        logging.warning(f"No .sdf.gz files found in {raw_dir}")
         return 0, 0
     
-    print(f"Extracting {len(gz_files)} SDF files using {max_workers} workers...")
+    logging.info(f"Extracting {len(gz_files)} SDF files using {max_workers} workers...")
     
     def extract_single_file(gz_file):
         """Helper function for parallel extraction"""
@@ -254,15 +258,15 @@ def extract_sdf_files(raw_dir, output_dir, max_workers=4):
                 filename, success, error = future.result()
                 if success:
                     successful += 1
-                    print(f"✓ Extracted ({successful}): {filename}")
+                    logging.info(f"✓ Extracted ({successful}): {filename}")
                 else:
                     failed += 1
-                    print(f"✗ Failed ({failed}): {filename} - {error}")
+                    logging.error(f"✗ Failed ({failed}): {filename} - {error}")
             except Exception as e:
                 failed += 1
-                print(f"✗ Exception extracting {gz_file.name}: {e}")
+                logging.error(f"✗ Exception extracting {gz_file.name}: {e}")
     
-    print(f"Extraction complete! Successful: {successful}, Failed: {failed}")
+    logging.info(f"Extraction complete! Successful: {successful}, Failed: {failed}")
     return successful, failed
 
 def get_tranche_name_from_filename(filename):
@@ -287,16 +291,16 @@ def _save_molecule(molecule_lines, molecule_name, output_dir, tranche_name, mole
         result = subprocess.run(['obabel', '-:', '-osdf'], 
                               input=mol_text, text=True, capture_output=True, timeout=10)
         if result.returncode != 0:
-            print(f"Skipping invalid molecule {molecule_index} in {tranche_name}")
+            logging.warning(f"Skipping invalid molecule {molecule_index} in {tranche_name}")
             return
     except subprocess.TimeoutExpired:
-        print(f"Skipping molecule {molecule_index} in {tranche_name} (timeout)")
+        logging.warning(f"Skipping molecule {molecule_index} in {tranche_name} (timeout)")
         return
     except FileNotFoundError:
         # Open Babel not available, continue without validation
         pass
     except Exception as e:
-        print(f"Error validating molecule {molecule_index}: {e}")
+        logging.error(f"Error validating molecule {molecule_index}: {e}")
         return
     
     # Create tranche-specific directory
@@ -362,10 +366,10 @@ def split_sdf_files(input_dir, output_dir, max_workers=4):
     sdf_files = list(Path(input_dir).glob("*.sdf"))
     
     if not sdf_files:
-        print(f"No .sdf files found in {input_dir}")
+        logging.warning(f"No .sdf files found in {input_dir}")
         return 0, 0, 0
     
-    print(f"Splitting {len(sdf_files)} SDF files into tranche-organized individual molecules using {max_workers} workers...")
+    logging.info(f"Splitting {len(sdf_files)} SDF files into tranche-organized individual molecules using {max_workers} workers...")
     
     def split_single_sdf(sdf_file):
         """Helper function for parallel SDF splitting"""
@@ -424,16 +428,16 @@ def split_sdf_files(input_dir, output_dir, max_workers=4):
                 filename, molecule_count, tranche_name, error = future.result()
                 if error:
                     failed_files += 1
-                    print(f"✗ Failed to split {filename}: {error}")
+                    logging.error(f"✗ Failed to split {filename}: {error}")
                 else:
                     total_molecules += molecule_count
                     tranches_created.add(tranche_name)
-                    print(f"✓ Split {filename}: {molecule_count} molecules → tranche {tranche_name}")
+                    logging.info(f"✓ Split {filename}: {molecule_count} molecules → tranche {tranche_name}")
             except Exception as e:
                 failed_files += 1
-                print(f"✗ Exception splitting {sdf_file.name}: {e}")
+                logging.error(f"✗ Exception splitting {sdf_file.name}: {e}")
     
-    print(f"Splitting complete! Total molecules: {total_molecules}, Failed files: {failed_files}, Tranches: {len(tranches_created)}")
+    logging.info(f"Splitting complete! Total molecules: {total_molecules}, Failed files: {failed_files}, Tranches: {len(tranches_created)}")
     return total_molecules, failed_files, len(tranches_created)
 
 if __name__ == "__main__":
@@ -446,33 +450,33 @@ if __name__ == "__main__":
         DOWNLOAD_WORKERS = 8  # Number of parallel download threads
         EXTRACTION_WORKERS = 4  # Number of parallel extraction threads
         
-        print(f"=== PARALLEL SDF DATA DOWNLOAD SCRIPT ===")
-        print(f"Download workers: {DOWNLOAD_WORKERS}")
-        print(f"Extraction workers: {EXTRACTION_WORKERS}")
+        logging.info(f"=== PARALLEL SDF DATA DOWNLOAD SCRIPT ===")
+        logging.info(f"Download workers: {DOWNLOAD_WORKERS}")
+        logging.info(f"Extraction workers: {EXTRACTION_WORKERS}")
         
         # Check if URI file exists
         if not os.path.exists(URI_FILE):
-            print(f"Error: URI file not found at {URI_FILE}")
-            print("Please ensure the URI file exists with URLs to SDF downloads.")
+            logging.error(f"Error: URI file not found at {URI_FILE}")
+            logging.error("Please ensure the URI file exists with URLs to SDF downloads.")
             exit(1)
         
         # Download all files with parallel processing and retries
         successful_downloads, failed_downloads = download_all_from_uri_file(
             URI_FILE, RAW_LIGANDS_DIR, max_workers=DOWNLOAD_WORKERS, max_retries=5)
                 
-        print(f"\n=== DOWNLOAD SUMMARY ===")
-        print(f"✓ Successful downloads: {successful_downloads}")
-        print(f"✗ Failed downloads: {failed_downloads}")
-        print(f"📁 Files saved to: {RAW_LIGANDS_DIR}")
+        logging.info(f"\n=== DOWNLOAD SUMMARY ===")
+        logging.info(f"✓ Successful downloads: {successful_downloads}")
+        logging.info(f"✗ Failed downloads: {failed_downloads}")
+        logging.info(f"📁 Files saved to: {RAW_LIGANDS_DIR}")
         
         # Extract SDF files with parallel processing
         sdf_dir = os.path.join(SCRIPT_DIR, "../data/column_one/ligands_sdf")
         successful_extractions, failed_extractions = extract_sdf_files(
             RAW_LIGANDS_DIR, sdf_dir, max_workers=EXTRACTION_WORKERS)
-        print(f"\n=== EXTRACTION SUMMARY ===")
-        print(f"✓ Successful extractions: {successful_extractions}")
-        print(f"✗ Failed extractions: {failed_extractions}")
-        print(f"📁 SDF files ready for splitting: {sdf_dir}")
+        logging.info(f"\n=== EXTRACTION SUMMARY ===")
+        logging.info(f"✓ Successful extractions: {successful_extractions}")
+        logging.info(f"✗ Failed extractions: {failed_extractions}")
+        logging.info(f"📁 SDF files ready for splitting: {sdf_dir}")
         
         # Check if data has already been processed
         split_dir = os.path.join(SCRIPT_DIR, "../data/column_one/ligands_sdf_split")
@@ -489,29 +493,29 @@ if __name__ == "__main__":
                         existing_tranches += 1
                         existing_molecules += len(sdf_files)
             
-            print(f"\n=== EXISTING PROCESSED DATA DETECTED ===")
-            print(f"✓ Found {existing_tranches} tranches with {existing_molecules:,} individual molecules")
-            print(f"📁 Location: {split_dir}")
-            print(f"\n🚀 SDF data is already processed and ready for docking!")
+            logging.info(f"\n=== EXISTING PROCESSED DATA DETECTED ===")
+            logging.info(f"✓ Found {existing_tranches} tranches with {existing_molecules:,} individual molecules")
+            logging.info(f"📁 Location: {split_dir}")
+            logging.info(f"\n🚀 SDF data is already processed and ready for docking!")
             
         elif successful_extractions > 0:
             # Split multi-molecule SDF files into individual molecules organized by tranche
-            print(f"\n--- Splitting extracted SDF files into individual molecules ---")
+            logging.info(f"\n--- Splitting extracted SDF files into individual molecules ---")
             total_molecules, failed_splits, tranche_count = split_sdf_files(
                 sdf_dir, split_dir, max_workers=EXTRACTION_WORKERS)
-            print(f"\n=== SPLITTING SUMMARY ===")
-            print(f"✓ Total individual molecules created: {total_molecules}")
-            print(f"✗ Failed file splits: {failed_splits}")
-            print(f"📁 Tranches created: {tranche_count}")
-            print(f"📁 Individual SDF files organized by tranche: {split_dir}")
+            logging.info(f"\n=== SPLITTING SUMMARY ===")
+            logging.info(f"✓ Total individual molecules created: {total_molecules}")
+            logging.info(f"✗ Failed file splits: {failed_splits}")
+            logging.info(f"📁 Tranches created: {tranche_count}")
+            logging.info(f"📁 Individual SDF files organized by tranche: {split_dir}")
             
             if total_molecules > 0:
-                print(f"\n🚀 SUCCESS: {total_molecules} individual SDF molecules are ready for docking!")
+                logging.info(f"\n🚀 SUCCESS: {total_molecules} individual SDF molecules are ready for docking!")
             else:
-                print("\n⚠️  WARNING: No molecules were successfully split.")
+                logging.warning("\n⚠️  WARNING: No molecules were successfully split.")
         else:
-            print("\n⚠️  WARNING: No SDF files were successfully extracted. Check the download and extraction logs.")
+            logging.warning("\n⚠️  WARNING: No SDF files were successfully extracted. Check the download and extraction logs.")
                         
     except Exception as e:
-        print(f"Error during SDF data download: {e}")
+        logging.error(f"Error during SDF data download: {e}")
         exit(1) 
