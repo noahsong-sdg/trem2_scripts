@@ -26,5 +26,5 @@ cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 
 python scripts/getdata_sdf.py # c4i
-python scripts/getdata2.py # c5i 
+python scripts/getdata2.py # c5i random delays, reduce workers, longer timeouts, 60 s timeouts, 10 mins
 python scripts/getdata3.py # c6

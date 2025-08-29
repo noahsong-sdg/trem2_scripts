@@ -458,7 +458,7 @@ if __name__ == "__main__":
         
         # Configuration for parallel processing
         DOWNLOAD_WORKERS = 2  # Reduced from 8 to avoid rate limiting
-        EXTRACTION_WORKERS = 4  # Number of parallel extraction threads
+        EXTRACTION_WORKERS = 2  # Number of parallel extraction threads
         
         print(f"=== PARALLEL SDF DATA DOWNLOAD SCRIPT ===")
         print(f"Download workers: {DOWNLOAD_WORKERS}")

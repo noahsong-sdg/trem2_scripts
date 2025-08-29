@@ -447,8 +447,8 @@ if __name__ == "__main__":
         URI_FILE = os.path.join(SCRIPT_DIR, "../data/column_one.uri") # Using the SDF.gz file URLs
         
         # Configuration for parallel processing
-        DOWNLOAD_WORKERS = 8  # Number of parallel download threads
-        EXTRACTION_WORKERS = 4  # Number of parallel extraction threads
+        DOWNLOAD_WORKERS = 2  # Number of parallel download threads
+        EXTRACTION_WORKERS = 2  # Number of parallel extraction threads
         
         logging.info(f"=== PARALLEL SDF DATA DOWNLOAD SCRIPT ===")
         logging.info(f"Download workers: {DOWNLOAD_WORKERS}")
