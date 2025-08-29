@@ -21,8 +21,8 @@ def signal_handler(signum, frame):
 # Configuration
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RECEPTOR_FILE = os.path.join(SCRIPT_DIR, "../data/receptor/cluster1_fixed.pdb")
-LIGAND_DIR = os.path.join(SCRIPT_DIR, "../data/column_two/ligands_sdf_split/")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c2_outputs/")
+LIGAND_DIR = os.path.join(SCRIPT_DIR, "../data/column_four_i/ligands_sdf_split/")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "../results/c4i_outputs/")
 
 # Box parameters
 CENTER_X, CENTER_Y, CENTER_Z = 42.328, 28.604, 21.648
