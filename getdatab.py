@@ -17,6 +17,7 @@ import gzip
 import shutil
 import time
 import logging
+import random
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
@@ -55,7 +56,16 @@ def download_zinc_subset(url, output_dir, filename=None):
         return filepath
 
     try:
-        response = requests.get(url, stream=True, timeout=30)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        time.sleep(random.uniform(0.5, 2.0))  # Random delay to avoid rate limiting
+        response = requests.get(url, stream=True, timeout=60, headers=headers)
         response.raise_for_status()  # Raise an exception for bad status codes
         
         # Get file size if available
@@ -190,8 +200,8 @@ def download_all_from_uri_file(uri_file_path, base_output_dir, max_workers=4, ma
         
         if attempt < max_retries and failed_downloads:
             logging.info(f"Retrying {len(failed_downloads)} failed downloads in next attempt...")
-            logging.info(f"Waiting 60 minutes before retry attempt {attempt + 1}...")
-            time.sleep(3600)  # 60 minutes = 600 seconds
+            logging.info(f"Waiting 10 minutes before retry attempt {attempt + 1}...")
+            time.sleep(600)  # 10 minutes = 600 seconds
         elif failed_downloads:
             logging.warning(f"Reached maximum retries ({max_retries}). {len(failed_downloads)} downloads still failed.")
     
@@ -447,8 +457,8 @@ if __name__ == "__main__":
         URI_FILE = os.path.join(SCRIPT_DIR, "../data/column_two.uri") # Using the SDF.gz file URLs
         
         # Configuration for parallel processing
-        DOWNLOAD_WORKERS = 8  # Number of parallel download threads
-        EXTRACTION_WORKERS = 4  # Number of parallel extraction threads
+        DOWNLOAD_WORKERS = 2  # Number of parallel download threads
+        EXTRACTION_WORKERS = 2  # Number of parallel extraction threads
         
         logging.info(f"=== PARALLEL SDF DATA DOWNLOAD SCRIPT ===")
         logging.info(f"Download workers: {DOWNLOAD_WORKERS}")
