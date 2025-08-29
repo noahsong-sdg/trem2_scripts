@@ -48,8 +48,7 @@ MCDOCK_FLAGS = {
     "--topn_local_refine": "1",
     "--min_rmsd": "0.3",
     "--max_num_confs_per_ligand": "20",
-    "--gen_conf": "1",
-    "--debug": ""
+    "--gen_conf": "1"
 }
 
 def get_completed_ligands():
@@ -120,17 +119,42 @@ def run_mcdock_chunk_with_retry(chunk_ligands, chunk_num, total_chunks):
             for ligand in remaining_ligands:
                 f.write(f"{os.path.abspath(ligand)}\n")
         
+        # Validate the ligand list file
+        if not os.path.exists(chunk_list):
+            logging.error(f"Ligand list file was not created: {chunk_list}")
+            return False
+        
+        # Check file size
+        file_size = os.path.getsize(chunk_list)
+        logging.info(f"Ligand list file created: {chunk_list} ({file_size} bytes)")
+        
+        # Read first few lines for debugging
+        with open(chunk_list, 'r') as f:
+            first_lines = [f.readline().strip() for _ in range(min(3, len(remaining_ligands)))]
+        logging.debug(f"First few ligand paths: {first_lines}")
+        
         # Build command
         cmd = ["unidocktools", "mcdock"]
         for flag, value in MCDOCK_FLAGS.items():
             if flag == "--gen_conf":
-                cmd.append(flag)
-            elif value is not None:
+                # Handle gen_conf flag specially - it might not need a value
+                if value == "1":
+                    cmd.append(flag)
+            elif value is not None and value != "":
                 cmd.extend([flag, value])
         cmd.extend(["--ligand_index", chunk_list])
         
+        # Debug: Print the command structure
+        logging.debug(f"Command structure:")
+        for i, arg in enumerate(cmd):
+            logging.debug(f"  {i}: {arg}")
+        
         try:
-            logging.info(f"Running command: {' '.join(cmd)}")
+            # Log the command being run
+            cmd_str = ' '.join(cmd)
+            logging.info(f"Running command: {cmd_str}")
+            
+            # Run the command
             result = subprocess.run(cmd, check=True, text=True, capture_output=True, timeout=36000,
                                    stdin=subprocess.DEVNULL)
             logging.info(f"Chunk {chunk_num} attempt {attempt + 1} completed successfully")
@@ -268,6 +292,39 @@ def run_diagnostic_tests():
     # Test 3: File access
     accessible = quick_file_test(all_files[:50])
     logging.info(f"File access test: {len(accessible)}/50 accessible")
+    
+    # Test 4: Check UniDock help
+    try:
+        result = subprocess.run(["unidocktools", "mcdock", "--help"], 
+                              capture_output=True, text=True, timeout=30)
+        logging.info("UniDock mcdock help:")
+        logging.info(result.stdout[:1000])  # First 1000 chars
+        if result.stderr:
+            logging.warning(f"UniDock help stderr: {result.stderr}")
+    except Exception as e:
+        logging.error(f"Could not get UniDock help: {e}")
+    
+    # Test 5: Test minimal command
+    if accessible:
+        test_ligand = accessible[0]
+        test_list = os.path.join(OUTPUT_DIR, "test_ligand_list.txt")
+        with open(test_list, "w") as f:
+            f.write(f"{os.path.abspath(test_ligand)}\n")
+        
+        try:
+            test_cmd = ["unidocktools", "mcdock", "--receptor", RECEPTOR_FILE, "--ligand_index", test_list]
+            logging.info(f"Testing minimal command: {' '.join(test_cmd)}")
+            result = subprocess.run(test_cmd, capture_output=True, text=True, timeout=60)
+            logging.info(f"Test command return code: {result.returncode}")
+            if result.stdout:
+                logging.info(f"Test stdout: {result.stdout[:500]}")
+            if result.stderr:
+                logging.warning(f"Test stderr: {result.stderr[:500]}")
+        except Exception as e:
+            logging.error(f"Test command failed: {e}")
+        finally:
+            if os.path.exists(test_list):
+                os.remove(test_list)
     
     logging.info("Diagnostic tests complete")
     return True
