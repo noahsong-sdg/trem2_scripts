@@ -4,7 +4,7 @@ c1 ------------------------------
 242
 187
 123
-
+83
 c2 ------------------------------- getdatab mcdockb2
 876
 711
@@ -36,6 +36,25 @@ c3 ------------------------------- getdatab2 mcdockb3
 853
 735
 686
+
+STDERR: Traceback (most recent call last):
+  File "/projects/noso3320/software/anaconda/envs/dock_env/bin/unidocktools", line 8, in <module>
+    sys.exit(main_cli())
+             ^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/main.py", line 32, in main_cli
+    name_module_dict[args["cmd"]].main(args)
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 261, in main
+    mcd = MultiConfDock(
+          ^^^^^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 103, in __init__
+    self.generate_conformation(max_nconf=max_nconf, min_rmsd=min_rmsd)
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/utils/logger.py", line 32, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/projects...
+2025-08-30 13:55:59,717 - STDOUT: [INFO][2025-08-30 13:55:36,320][main.py 28] [Params] {'cmd': 'mcdock', 'receptor': '/scratch/alpine/noso3320/trem2/unidock/scripts/../data/receptor/cluster1_fixed.pdb', 'ligands': None, 'ligand_index': '/scratch/alpine/noso3320/trem2/unidock/scripts/../results/c3_outputs/chunk_5_attempt_3_ligand_list.txt', 'gen_conf': True, 'max_num_confs_per_ligand': 20, 'min_rmsd': 0.3, 'center_x': 42.328, 'center_y': 28.604, 'center_z': 21.648, 'size_x': 22.5, 'size_y': 22.5, 'size_z': 22.5, 'savedir': '/scra...
+2025-08-30 13:55:59,717 - Identified failed ligand: ZINC000835080321.sdfG
+
 
 c4i ------------------------------- getdata mcdock
 1824
