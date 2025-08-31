@@ -5,6 +5,7 @@ c1 ------------------------------
 187
 123
 83
+
 c2 ------------------------------- getdatab mcdockb2
 876
 711
@@ -61,6 +62,28 @@ c4i ------------------------------- getdata mcdock
 1604
 1544
 1504
+
+
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/main.py", line 32, in main_cli
+    name_module_dict[args["cmd"]].main(args)
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 261, in main
+    mcd = MultiConfDock(
+          ^^^^^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 103, in __init__
+    self.generate_conformation(max_nconf=max_nconf, min_rmsd=min_rmsd)
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/utils/logger.py", line 32, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 225, in generate_conformation
+    gen_mol_confs = generate_conf(mol.get_first_mol(), name=prefix,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/modules/confgen/confgen.py", line 25, in generate_conf
+    return cls().generate_conformation(mol, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/projects/noso3320/software/anaconda/envs/dock_env/lib/python3.12/site-packages/unidock_tools/modules/confgen/obabel.py", line 60, in generate_conformation
+    mol_list = [mol for mol in Chem.SDMolSupplier(f"{workdir}/{name}.sdf",
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: File error: Bad input file obabel_20250830082426/ZINC001026742242.sdf
 
 c4ii ----------------------------------
 
