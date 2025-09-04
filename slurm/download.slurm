@@ -3,7 +3,7 @@
 #SBATCH --qos=normal
 #SBATCH --partition=amilan
 #SBATCH --account=ucb-general
-#SBATCH --job-name=get_data_all
+#SBATCH --job-name=download_layer_a
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
