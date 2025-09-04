@@ -101,3 +101,56 @@ c6 --------------------------------- getdata3
 1156
 1120
 1085
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hello,
+
+I was wondering if I could receive some clarity with what MCDock does with OpenBabel in the backend. Many of my docking runs terminate with 
+
+```
+[stderr] Traceback (most recent call last):
+  File "{pathtoenv}/dock_env/bin/unidocktools", line 8, in <module>
+    sys.exit(main_cli())
+             ^^^^^^^^^^
+  File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/main.py", line 32, in main_cli
+    name_module_dict[args["cmd"]].main(args)
+  File "{pathtoenv}/envs/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 261, in main
+    mcd = MultiConfDock(
+          ^^^^^^^^^^^^^^
+  File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 103, in __init__
+    self.generate_conformation(max_nconf=max_nconf, min_rmsd=min_rmsd)
+  File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/utils/logger.py", line 32, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/application/mcdock.py", line 225, in generate_conformation
+    gen_mol_confs = generate_conf(mol.get_first_mol(), name=prefix,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/modules/confgen/confgen.py", line 25, in generate_conf
+    return cls().generate_conformation(mol, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "{pathtoenv}/dock_env/lib/python3.12/site-packages/unidock_tools/modules/confgen/obabel.py", line 60, in generate_conformation
+    mol_list = [mol for mol in Chem.SDMolSupplier(f"{workdir}/{name}.sdf",
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: File error: Bad input file obabel_20250830082426/ZINC001026742242.sdf
+```
+
+I can see that some `obabel_*` folders are generated in the parent folder of where my script is ran. Each of these folders contains one smi file and one sdf file; the sdf file is empty. I believe this is the issue, but don't know what could be causing this. The existence of the smi file indicates that MCDock might generate a smi mol from the sdf files I give it, but I am uncertain.
+
+Pre-docking, I have even confirmed the validity of each sdf file using obabel, but the results remain the same.
+
+I am using the ZINC database, and was wondering if this was a known issue with sdf files from their database. Any guidance would be appreciated.

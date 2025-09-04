@@ -17,7 +17,6 @@ module load cuda/11.8
 module load cmake
 module load anaconda
 
-SCRIPT_DIR="/scratch/alpine/noso3320/trem2/unidock/scripts"
-cd /scratch/alpine/noso3320/trem2/unidock
+cd /scratch/alpine/noso3320/trem2/unidock/scripts
 conda activate dock_env
-python $SCRIPT_DIR/mcdockv2_b3.py
+python mcdockv2_b3.py
