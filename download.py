@@ -26,7 +26,7 @@ from typing import List, Dict, Optional
 import time
 
 
-class ZINC22ADownloader:
+class ZINCDownloader:
     """Handles downloading of ZINC22A ligand files using rsync commands."""
     
     def __init__(self, rsync_file: str, dry_run: bool = False):
@@ -521,7 +521,7 @@ def main():
     
     try:
         # Create and run the downloader
-        downloader = ZINC22ADownloader(
+        downloader = ZINCDownloader(
             rsync_file=rsync_file,
             dry_run=dry_run
         )

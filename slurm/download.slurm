@@ -25,4 +25,5 @@ module load anaconda
 cd /scratch/alpine/noso3320/trem2/unidock
 conda activate dock_env
 
-python scripts/download.py
+echo "running"
+python scripts/download.py zinc22a.rsync
