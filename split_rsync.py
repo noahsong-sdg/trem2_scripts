@@ -60,9 +60,12 @@ def split_rsync_file(rsync_file, lines_per_chunk=1000):
                 
                 # Write the line to current chunk
                 current_chunk_file.write(line + '\n')
-                current_chunk_lines += 1
                 
-                # Check if we need to start a new chunk
+                # Only count rsync commands for chunk size
+                if line.startswith('rsync '):
+                    current_chunk_lines += 1
+                
+                # Check if we need to start a new chunk (based on rsync command count)
                 if line.startswith('rsync ') and current_chunk_lines >= lines_per_chunk:
                     current_chunk_file.close()
                     print(f"  Chunk {chunk_num} complete: {current_chunk_lines} rsync commands")

@@ -85,8 +85,16 @@ conda activate dock_env
 
 # Get the chunk file for this array job
 CHUNK_DIR="\${DATA_DIR}/zinc22a_chunks"
-CHUNK_FILES=(\$(ls \${CHUNK_DIR}/*.rsync | sort))
+CHUNK_FILES=(\$(ls \${CHUNK_DIR}/*.rsync 2>/dev/null | sort))
+if [ \${#CHUNK_FILES[@]} -eq 0 ]; then
+    echo "Error: No chunk files found in \${CHUNK_DIR}"
+    exit 1
+fi
 CHUNK_FILE="\${CHUNK_FILES[\$((SLURM_ARRAY_TASK_ID-1))]}"
+if [ -z "\${CHUNK_FILE}" ]; then
+    echo "Error: No chunk file for task ID \${SLURM_ARRAY_TASK_ID}"
+    exit 1
+fi
 
 echo "Processing chunk: \${CHUNK_FILE}"
 echo "Array task ID: \${SLURM_ARRAY_TASK_ID}"
